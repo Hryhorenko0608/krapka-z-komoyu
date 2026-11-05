@@ -1,0 +1,1266 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Неофіційний фанклуб Google Таблиць. Свої вдома ;)">
+<style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
+<title>Клуб крапки з комою</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Layout: the page IS a sheet — column letters on top, row numbers down the left, a formula bar as the hero; content sits in "cells" */
+:root{
+  --paper:#fcfdfc;
+  --grid:#dde3de;
+  --head:#f0f3f1;
+  --ink:#16221b;
+  --muted:#5d6b62;
+  --select:#2a5bd7;
+  --cf:#b7e1cd;          /* conditional-format green */
+  --cf-ink:#0e3b26;
+  --err:#c5221f;
+  --display:"Unbounded", "Arial Black", sans-serif;
+  --body:"Golos Text", "Helvetica Neue", Arial, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  --cell:34px;
+  --peer1:#d9630b;
+  --peer2:#8b3ad6;
+  --peer3:#0f8a7a;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#121614;--grid:#262e29;--head:#1a201c;--ink:#e6ede8;--muted:#93a198;--select:#7aa2ff;--cf:#1f5a3d;--cf-ink:#d4f5e3;--err:#ff7b72;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121614;--grid:#262e29;--head:#1a201c;--ink:#e6ede8;--muted:#93a198;--select:#7aa2ff;--cf:#1f5a3d;--cf-ink:#d4f5e3;--err:#ff7b72;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:120px var(--cell);background-position:43px 23px}
+.usercell,.cell-editor{position:absolute;left:0;top:0;width:120px;height:34px;z-index:14;font:500 13px var(--mono);display:flex;align-items:center;padding:0 6px;white-space:nowrap}
+.usercell{color:var(--ink);cursor:cell;overflow:visible}
+.usercell.num{justify-content:flex-end}
+.usercell.bad{color:var(--err);font-weight:700}
+.cell-editor{border:2px solid var(--select);background:var(--paper);color:var(--ink);outline:0;z-index:16}
+.content,.sheet{cursor:cell}
+.hint-line{margin-top:14px;font:500 12px var(--mono);color:var(--muted)}
+.colhead{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;background:var(--head);border-bottom:1px solid var(--grid);font:500 11px var(--mono);color:var(--muted);height:24px;overflow:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--head)}
+.colhead span{flex:0 0 120px;display:grid;place-items:center;border-right:1px solid var(--grid)}
+.colhead span:first-child{flex-basis:44px}
+.colhead span.on{background:var(--cf);color:var(--cf-ink)}
+.sheet{display:grid;grid-template-columns:44px 1fr}
+.rownums{background:var(--head);border-right:1px solid var(--grid);font:500 11px var(--mono);color:var(--muted)}
+.rownums div{height:var(--cell);display:grid;place-items:center;border-bottom:1px solid var(--grid)}
+.content{min-width:0;padding-right:max(16px,env(safe-area-inset-right,0px));padding-left:16px}
+.wrap{max-width:1040px;margin:0 auto}
+
+/* formula bar */
+.fbar{margin-top:var(--cell);display:flex;align-items:stretch;border:1px solid var(--grid);background:var(--paper);height:var(--cell);font:14px var(--mono)}
+.fbar .ref{width:64px;display:grid;place-items:center;border-right:1px solid var(--grid);color:var(--muted)}
+.fbar .fx{width:38px;display:grid;place-items:center;border-right:1px solid var(--grid);font-style:italic;color:var(--muted)}
+.fbar .txt{flex:1;display:flex;align-items:center;padding:0 10px;white-space:nowrap;overflow:hidden;min-width:0}
+.caret{display:inline-block;width:1.5px;height:17px;background:var(--select);margin-left:1px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.fn{color:#b5591a}.str{color:#1f7a45}.sep{color:var(--select);font-weight:700}
+:root[data-theme="dark"] .fn{color:#ffb070}:root[data-theme="dark"] .str{color:#7fd6a2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .fn{color:#ffb070}:root:not([data-theme="light"]) .str{color:#7fd6a2}}
+
+.hero{position:relative;padding-block:calc(var(--cell)*1.5) calc(var(--cell)*2)}
+.hero .tag{font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hero h1{margin:.2em 0 0;font-family:var(--display);font-weight:900;font-size:clamp(46px,9.5vw,124px);line-height:.9;letter-spacing:-.04em;text-wrap:balance}
+.hero h1 .semi{display:inline-block;color:var(--select);border:3px solid var(--select);padding:0 .12em;margin-left:.04em;position:relative;background:var(--paper)}
+.semi .handle{position:absolute;right:-9px;bottom:-9px;width:14px;height:14px;background:var(--select);border:2px solid var(--paper);padding:0;cursor:crosshair;z-index:2;animation:nudge 2.4s ease-in-out infinite}
+@keyframes nudge{50%{transform:scale(1.35)}}
+.semi .ghost{position:absolute;left:-3px;right:-3px;height:100%;border:2px dashed var(--select);display:grid;place-items:center;color:var(--select);opacity:0;animation:ghost 1.8s ease-out forwards;pointer-events:none}
+@keyframes ghost{0%{opacity:0;transform:translateY(-12px)}15%{opacity:.9;transform:none}70%{opacity:.9}100%{opacity:0}}
+.semi .tip{position:absolute;left:calc(100% + 14px);top:0;font:500 12px var(--mono);letter-spacing:0;white-space:nowrap;background:var(--ink);color:var(--paper);padding:4px 8px;opacity:0;animation:ghost 1.8s ease-out forwards}
+.hero p.lead{max-width:56ch;font-size:19px;margin:calc(var(--cell)*.8) 0 0}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:var(--cell)}
+.btn{font:600 15px var(--body);border:1.5px solid var(--ink);background:var(--ink);color:var(--paper);padding:10px 18px;cursor:pointer;border-radius:2px}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:focus-visible,.cell input:focus-visible,select:focus-visible{outline:2px solid var(--select);outline-offset:2px}
+
+section{padding-block:calc(var(--cell)*1.5)}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(26px,3.6vw,40px);letter-spacing:-.03em;line-height:1.05;margin:0 0 6px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 calc(var(--cell)*.8);max-width:60ch}
+
+/* quiz sheet */
+.mini{border:1px solid var(--grid);background:var(--paper);overflow-x:auto}
+.mini table{border-collapse:collapse;width:100%;min-width:520px;font:14px var(--mono)}
+.mini th,.mini td{border:1px solid var(--grid);height:40px;padding:0 10px;text-align:left}
+.mini th{background:var(--head);color:var(--muted);font-weight:500;font-size:11px;text-align:center;width:44px}
+.mini thead th{height:24px}
+.mini td.lbl{font-family:var(--body);font-size:15px;width:46%}
+.cell input,.cell select{width:100%;height:38px;border:0;background:transparent;color:var(--ink);font:500 15px var(--mono)}
+.cell:focus-within{outline:2px solid var(--select);outline-offset:-2px}
+tr.result td{background:var(--cf);color:var(--cf-ink);font-weight:700}
+tr.result td.lbl{font-weight:600}
+.rank{font-family:var(--body);font-size:17px}
+.flash{animation:flash .5s ease-out}
+@keyframes flash{from{background:#fff3b0}}
+.formula{font:12px var(--mono);color:var(--muted);margin-top:8px;overflow-wrap:anywhere}
+
+/* manifesto */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0;border-top:1px solid var(--ink)}
+.rule{display:grid;grid-template-columns:52px 1fr;gap:12px;padding:16px 4px;border-bottom:1px solid var(--grid);background:var(--paper)}
+.rule .n{font:700 13px var(--mono);color:var(--select)}
+.rule b{display:block;font-size:17px;letter-spacing:-.01em}
+.rule span{color:var(--muted);font-size:15px}
+
+/* errors */
+.errs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.err{border:1px solid var(--grid);background:var(--paper);padding:16px;position:relative;cursor:pointer;transition:background .35s,border-color .35s}
+.err code{display:inline-block}
+.err.shake code{animation:shake .45s}
+@keyframes shake{20%,60%{transform:translateX(-5px) rotate(-2deg)}40%,80%{transform:translateX(5px) rotate(2deg)}}
+.err.fixed{background:var(--cf);border-color:var(--cf)}
+.err.fixed::before{display:none}
+.err.fixed code{color:var(--cf-ink);font-size:17px;overflow-wrap:anywhere}
+.err.fixed p,.err.fixed small{color:var(--cf-ink)}
+.peer{position:absolute;left:0;top:0;width:120px;height:34px;border:2px solid var(--pc);z-index:15;pointer-events:none;transition:transform .7s cubic-bezier(.3,.8,.2,1);font:500 13px var(--mono);display:flex;align-items:center;padding:0 6px;color:var(--ink);overflow:hidden;white-space:nowrap;overflow:visible}
+.peer .who{position:absolute;bottom:100%;left:-2px;background:var(--pc);color:#fff;font:600 10px var(--mono);padding:2px 6px;white-space:nowrap}
+.peer .ink{overflow:hidden;max-width:104px}
+.err::before{content:"";position:absolute;right:0;top:0;border:7px solid transparent;border-top-color:var(--err);border-right-color:var(--err)}
+.err code{font:700 22px var(--mono);color:var(--err)}
+.err p{margin:8px 0 0;font-size:15px}
+.err small{display:block;margin-top:8px;font:12px var(--mono);color:var(--muted)}
+
+/* join */
+.join{border:2px solid var(--ink);background:var(--paper);padding:calc(var(--cell)*.9);display:grid;gap:16px;grid-template-columns:1fr auto;align-items:center}
+.join h2{margin:0}
+.join p{margin:4px 0 0;color:var(--muted)}
+#joined{font:600 15px var(--mono);color:var(--cf-ink);background:var(--cf);padding:8px 12px}
+.join-form{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+.join-form .fbar{margin:0;min-width:240px;flex:1}
+.join-form .fbar input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:500 15px var(--mono);padding:0 10px;height:100%}
+.join-form .fbar:focus-within{outline:2px solid var(--select);outline-offset:-1px}
+.join-form .btn:disabled{opacity:.6;cursor:wait}
+.reg{margin-top:calc(var(--cell)*.8)}
+.reg-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.reg-head h3{margin:0;font:700 18px var(--display);letter-spacing:-.02em}
+#reg-count{font:500 12px var(--mono);color:var(--muted)}
+.reg .mini{max-height:calc(var(--cell)*9);overflow:auto}
+.reg thead th{width:auto;text-align:left;padding:0 10px;position:sticky;top:0}
+.reg thead th:first-child,.reg tbody th{width:44px;text-align:center;padding:0}
+.reg td{font-family:var(--mono);font-size:14px}
+.reg td:nth-child(2){text-align:right;font-variant-numeric:tabular-nums;width:110px}
+.reg tr.me td{background:var(--cf);color:var(--cf-ink);font-weight:700}
+.reg-note{margin:8px 0 0;font:500 13px var(--mono);color:var(--muted)}
+.reg-note:empty{display:none}
+footer{padding-block:calc(var(--cell)*1.5);font:12px var(--mono);color:var(--muted)}
+
+.sweep{position:fixed;inset:0;pointer-events:none;z-index:30;display:grid;grid-template-columns:repeat(auto-fill,120px);grid-auto-rows:var(--cell)}
+.sweep i{background:var(--cf);opacity:0;animation:cf .9s ease-out forwards}
+@keyframes cf{20%{opacity:.85}100%{opacity:0}}
+
+/* gate */
+#gate{position:fixed;inset:0;z-index:100;background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:120px var(--cell);display:grid;place-items:center;padding:calc(env(safe-area-inset-top,0px) + 24px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 24px) max(16px,env(safe-area-inset-left,0px));transition:opacity .6s,visibility .6s}
+#gate.open{opacity:0;visibility:hidden}
+.lock{width:min(520px,100%);background:var(--paper);border:2px solid var(--ink);box-shadow:8px 8px 0 var(--ink);padding:28px}
+.lock .badge{display:inline-flex;gap:8px;align-items:center;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;background:var(--head);border:1px solid var(--grid);padding:4px 8px;color:var(--muted)}
+.lock h2{margin:16px 0 8px;font-size:clamp(24px,5vw,32px)}
+.lock .q{font-size:18px;margin:0 0 18px}
+.lock .fbar{margin:0}
+.lock .fbar input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:500 15px var(--mono);padding:0 10px;height:100%}
+.lock .fbar:focus-within{outline:2px solid var(--select);outline-offset:-1px}
+.lock .row{display:flex;gap:12px;align-items:center;margin-top:16px;flex-wrap:wrap}
+#gate-msg{font:500 13px var(--mono);color:var(--err);min-height:1.4em}
+#gate-msg.hint{color:var(--muted)}
+.lock.shake{animation:shake .45s}
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translate(-50%,30px);z-index:120;background:var(--err);color:#fff;font:600 15px var(--body);padding:12px 18px;box-shadow:4px 4px 0 var(--ink);opacity:0;pointer-events:none;transition:opacity .25s,transform .35s cubic-bezier(.3,1.6,.5,1);max-width:calc(100vw - 32px)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.ok{background:var(--select)}
+body.quake .wrap{animation:shake .4s}
+.relock{background:none;border:0;color:var(--muted);font:12px var(--mono);text-decoration:underline;cursor:pointer;padding:0}
+@media (max-width:640px){
+  .sheet{grid-template-columns:28px 1fr}.colhead span:first-child{flex-basis:28px}
+  body{background-position:27px 23px}
+  .rownums div{font-size:9px}
+  .join{grid-template-columns:1fr}
+  .fbar .ref{width:46px}
+}
+/* Таблікс */
+#tetris{position:fixed;inset:0;z-index:90;background:rgba(10,16,12,.55);display:grid;place-items:center;overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px))}
+#tetris[hidden]{display:none!important}
+.tx-win{background:var(--paper);border:2px solid var(--ink);box-shadow:8px 8px 0 var(--ink);max-width:100%;animation:pop .35s cubic-bezier(.3,1.4,.5,1)}
+@keyframes pop{from{transform:scale(.9);opacity:0}}
+.tx-top{display:flex;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--grid);background:var(--head);font:12px var(--mono);color:var(--muted)}
+.tx-top b{font:700 14px var(--display);color:var(--ink)}
+.tx-top span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tx-x{border:0;background:none;color:var(--ink);font-size:18px;cursor:pointer;padding:2px 6px}
+.tx-win .fbar{margin:0;border-width:0 0 1px}
+.tx-body{display:flex;gap:16px;padding:14px;align-items:flex-start}
+#tx-board{display:block;border:1px solid var(--grid);touch-action:none;outline:0}
+.tx-side{display:flex;flex-direction:column;gap:10px;min-width:160px}
+.tx-lbl{font:11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px}
+#tx-next{border:1px solid var(--grid);display:block}
+.tx-tab{border-collapse:collapse;font:13px var(--mono);width:100%}
+.tx-tab th,.tx-tab td{border:1px solid var(--grid);padding:4px 8px;height:30px}
+.tx-tab th{background:var(--head);color:var(--muted);font-weight:500;text-align:left}
+.tx-tab td{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.tx-keys{font:11px/1.7 var(--mono);color:var(--muted)}
+.tx-lb{width:230px;min-width:0}
+.lb th{text-align:left}
+.lb td{font-weight:500}
+.lb td:first-child{text-align:center;width:34px;color:var(--muted)}
+.lb td:nth-child(2){text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb td:last-child{font-weight:700}
+.lb tr:nth-child(1) td:first-child{color:#b8860b;font-weight:700}
+.lb tr.me td{background:var(--cf);color:var(--cf-ink)}
+.lb-note{margin:8px 0 0;font:12px/1.5 var(--mono);color:var(--muted)}
+.lb-note:empty{display:none}
+@media (max-width:640px){.tx-lb{width:100%}}
+.tx-pad{display:none;gap:8px;padding:0 14px 14px;justify-content:center}
+.tx-pad button{flex:1;max-width:64px;height:50px;font:700 18px var(--mono);border:1.5px solid var(--ink);background:var(--head);color:var(--ink);cursor:pointer;touch-action:manipulation}
+@media (max-width:640px),(pointer:coarse){.tx-pad{display:flex}}
+@media (max-width:640px){.tx-body{flex-direction:column;align-items:center;gap:10px}.tx-side{flex-direction:row;flex-wrap:wrap;align-items:flex-start;min-width:0;width:100%}.tx-tab{width:auto;flex:1}.tx-keys{display:none}.tx-top span{display:none}}
+/* cracks + damage report */
+#cracks{position:fixed;inset:0;z-index:198;pointer-events:none;width:100%;height:100%}
+#cracks path{fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round;animation:crack .25s ease-out both}
+@keyframes crack{from{stroke-dashoffset:var(--len)}to{stroke-dashoffset:0}}
+.dmg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-2deg);z-index:120;background:var(--paper);color:var(--ink);border:2px solid var(--ink);box-shadow:8px 8px 0 var(--err);padding:20px 24px;width:min(380px,calc(100vw - 32px));font:14px var(--mono)}
+.dmg h3{margin:0 0 10px;font:900 22px var(--display);color:var(--err);letter-spacing:-.02em}
+.dmg table{width:100%;border-collapse:collapse}
+.dmg td{border-bottom:1px dashed var(--grid);padding:6px 0}
+.dmg td:last-child{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.dmg .btn{margin-top:14px}
+/* live cursors */
+.live{position:absolute;left:0;top:0;z-index:17;pointer-events:none;transition:transform .12s linear}
+.live svg{position:absolute;left:0;top:0;width:18px;height:18px}
+.live span{position:absolute;left:14px;top:16px;background:var(--lc);color:#fff;font:600 11px var(--mono);padding:2px 7px;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+.live-cell{position:absolute;left:0;top:0;width:120px;height:34px;border:2px solid var(--lc);z-index:13;pointer-events:none;transition:transform .12s linear}
+#online:empty{display:none}
+/* challenge */
+.chal{border:2px solid var(--ink);background:var(--paper);padding:calc(var(--cell)*.8)}
+.chal-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font:500 13px var(--mono);color:var(--muted)}
+.chal-src{margin:14px 0 6px;font:500 12px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.chal-q{font:600 clamp(15px,2.2vw,22px) var(--mono);overflow-wrap:anywhere;padding:12px;background:var(--head);border:1px dashed var(--grid)}
+.chal-q .c{color:var(--err);font-weight:800}
+.chal .fbar{margin-top:12px}
+.chal .fbar input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:500 15px var(--mono);padding:0 10px;height:100%}
+.chal .fbar:focus-within{outline:2px solid var(--select);outline-offset:-1px}
+.timer{height:8px;background:var(--grid);margin-top:12px;overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:var(--select);transform-origin:left}
+.timer.hot i{background:var(--err)}
+.chal-res{margin-top:12px;font:600 15px var(--body);min-height:1.5em}
+.chal-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.streak{font:900 28px var(--display)}
+/* certificate */
+#cert{position:fixed;inset:0;z-index:95;background:rgba(10,16,12,.6);display:grid;place-items:center;overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px))}
+#cert[hidden]{display:none!important}
+.cert-win{background:var(--paper);border:2px solid var(--ink);box-shadow:8px 8px 0 var(--ink);padding:16px;display:grid;gap:12px;justify-items:center;max-width:100%}
+.cert-win img{height:min(68vh,640px);width:auto;max-width:100%;border:1px solid var(--grid)}
+.cert-win .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.cert-hint{margin:0;font:12px/1.5 var(--mono);color:var(--muted);text-align:center;max-width:360px}
+/* chaos */
+body.chaos .wrap{animation:tilt 3s ease-in-out infinite}
+@keyframes tilt{25%{transform:rotate(-.7deg)}75%{transform:rotate(.7deg)}}
+body.chaos .colhead span{animation:flick .6s steps(2) infinite}
+@keyframes flick{50%{background:var(--err);color:#fff}}
+.junk{position:absolute;left:0;top:0;width:120px;height:34px;z-index:12;font:700 13px var(--mono);color:var(--err);display:flex;align-items:center;padding:0 6px;pointer-events:none;animation:jin .2s ease-out}
+@keyframes jin{from{opacity:0}}
+#go-chaos.on{background:var(--err);border-color:var(--err);color:#fff}
+/* comma explosion */
+#boom{position:fixed;inset:0;z-index:200;pointer-events:none}
+.blown{transition:transform .45s cubic-bezier(.2,.9,.3,1);transform:translate(var(--dx),var(--dy)) rotate(var(--rot))}
+.reassemble{transition:transform .9s cubic-bezier(.5,1.5,.4,1)}
+body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:199;pointer-events:none;animation:fb .5s ease-out forwards}
+@keyframes fb{from{opacity:1}to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.caret{animation:none}.sweep{display:none}.flash{animation:none}body.chaos .wrap,body.chaos .colhead span{animation:none}}
+</style>
+</head>
+<body>
+
+
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+  <form class="lock" id="gate-form" autocomplete="off">
+    <span class="badge">🔒 Захищений діапазон · A1:Z1000</span>
+    <h2 id="gate-title">Секретне питання</h2>
+    <p class="q">Що розділяє аргументи формули в справжніх фанатів?</p>
+    <div class="fbar"><div class="ref">A1</div><div class="fx">fx</div><input id="gate-in" aria-label="Відповідь" placeholder="=ВІДПОВІДЬ(…)"></div>
+    <div class="row"><button class="btn" type="submit">Перевірити</button><span id="gate-msg" aria-live="polite"></span></div>
+  </form>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="cert" hidden role="dialog" aria-modal="true" aria-label="Сертифікат учасника">
+  <div class="cert-win">
+    <img id="cert-img" alt="Сертифікат учасника клубу">
+    <div class="row"><button class="btn" id="cert-save">Завантажити</button><button class="btn ghost" id="cert-close">Закрити</button></div>
+    <p class="cert-hint" id="cert-hint">Формат 9:16 — одразу під сторіс і рілс.</p>
+  </div>
+</div>
+<div id="tetris" hidden role="dialog" aria-modal="true" aria-labelledby="tx-title">
+  <div class="tx-win">
+    <div class="tx-top"><b id="tx-title">Таблікс</b><span>Аркуш «Гра» · автозбереження вимкнено</span><button class="tx-x" id="tx-close" aria-label="Закрити гру">✕</button></div>
+    <div class="fbar"><div class="ref">A1</div><div class="fx">fx</div><div class="txt" id="tx-fx">=ТАБЛІКС()</div></div>
+    <div class="tx-body">
+      <canvas id="tx-board" tabindex="0" aria-label="Ігрове поле"></canvas>
+      <div class="tx-side">
+        <div><span class="tx-lbl">Наступна</span><canvas id="tx-next"></canvas></div>
+        <table class="tx-tab">
+          <tr><th>Очки</th><td id="tx-score">0</td></tr>
+          <tr><th>Рядки</th><td id="tx-lines">0</td></tr>
+          <tr><th>Рівень</th><td id="tx-level">1</td></tr>
+          <tr><th>Рекорд</th><td id="tx-best">0</td></tr>
+        </table>
+        <button class="btn" id="tx-restart">Нова гра</button>
+        <button class="btn ghost" id="tx-pause">Пауза</button>
+        <div class="tx-keys">← → рух<br>↑ поворот<br>↓ швидше<br>пробіл — вниз<br>P пауза · Esc вийти</div>
+      </div>
+      <div class="tx-lb">
+        <span class="tx-lbl">🏆 Турнірна таблиця</span>
+        <table class="tx-tab lb"><thead><tr><th>#</th><th>Нік</th><th>Очки</th></tr></thead><tbody id="lb-body"></tbody></table>
+        <p class="lb-note" id="lb-note"></p>
+      </div>
+    </div>
+    <div class="tx-pad">
+      <button data-a="left" aria-label="Вліво">←</button><button data-a="rot" aria-label="Повернути">⟳</button><button data-a="right" aria-label="Вправо">→</button><button data-a="down" aria-label="Швидше">↓</button><button data-a="drop" aria-label="Кинути вниз">⤓</button>
+    </div>
+  </div>
+</div>
+<div class="colhead" aria-hidden="true" id="cols"></div>
+<div class="sheet">
+  <div class="rownums" aria-hidden="true" id="rows"></div>
+  <div class="content"><div class="wrap">
+
+    <div class="fbar" aria-label="Рядок формул">
+      <div class="ref">A1</div><div class="fx">fx</div>
+      <div class="txt"><span id="typed"></span><span class="caret"></span></div>
+    </div>
+
+    <header class="hero">
+      <div class="tag">Фанклуб Google Таблиць · заснований у клітинці A1</div>
+      <h1>Клуб крапки з комою<span class="semi" id="semi">;<button class="handle" id="handle" aria-label="Потягни маркер автозаповнення" title="Потягни мене"></button></span></h1>
+      <p class="lead">Для тих, хто бачить у порожній таблиці не сітку, а можливості. Хто пише ВПР напам'ять, закріплює перший рядок до того, як щось ввести, і знає, що кома в формулі — це образа.</p>
+      <div class="cta">
+        <button class="btn" id="go-join">Вступити до клубу</button>
+        <button class="btn ghost" id="go-quiz">Який я фанат?</button>
+        <button class="btn ghost" id="go-game">▶ Грати в Таблікс</button>
+        <button class="btn ghost" id="go-chaos">🔥 Режим хаосу</button>
+      </div>
+      <div class="hint-line">Клікни в будь-яку порожню клітинку і пиши. Формули теж рахуються: =2+2 або =СУМ(5; 10)</div>
+      <div class="hint-line" id="online"></div>
+    </header>
+
+    <section id="quiz">
+      <h2>Тест на рівень фаната</h2>
+      <p class="sub">Заповни клітинки. Результат перерахується сам, як і має бути в нормальній таблиці.</p>
+      <div class="mini">
+        <table>
+          <thead><tr><th></th><th>A</th><th>B</th></tr></thead>
+          <tbody>
+            <tr><th>1</th><td class="lbl">Годин на тиждень у таблицях</td><td class="cell"><input id="q-hours" type="number" min="0" max="168" value="12" aria-label="Годин на тиждень"></td></tr>
+            <tr><th>2</th><td class="lbl">Улюблена функція</td><td class="cell"><select id="q-fn" aria-label="Улюблена функція">
+              <option value="1">СУМ</option><option value="2" selected>ВПР</option><option value="3">ЯКЩО</option><option value="4">ARRAYFORMULA</option><option value="5">QUERY</option><option value="5">IMPORTRANGE</option></select></td></tr>
+            <tr><th>3</th><td class="lbl">Вкладок у найбільшому файлі</td><td class="cell"><input id="q-tabs" type="number" min="1" max="200" value="7" aria-label="Кількість вкладок"></td></tr>
+            <tr><th>4</th><td class="lbl">Об'єднуєш клітинки?</td><td class="cell"><select id="q-merge" aria-label="Чи об'єднуєш клітинки"><option value="0">Ніколи</option><option value="-3">Буває…</option></select></td></tr>
+            <tr class="result"><th>5</th><td class="lbl">Твій рівень</td><td id="q-res"><span class="rank">—</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="formula">B5 =ЯКЩО(B1*0,4+B2*2+B3*0,3+B4&gt;14; "Легенда"; ЯКЩО(…; "Майстер"; "Новачок"))</div>
+    </section>
+
+    <section id="chal">
+      <h2>Челендж: формула від ChatGPT</h2>
+      <p class="sub">ChatGPT знову дав формулу з комами. Перепиши її під українську локалізацію, поки не вийшов час. Кожен раунд швидше. Кома в полі — дискваліфікація.</p>
+      <div class="chal">
+        <div class="chal-top"><span id="chal-round">Раунд 0</span><span id="chal-best">Рекорд: 0</span></div>
+        <div class="chal-src">ChatGPT дає:</div>
+        <div class="chal-q" id="chal-q">Натисни «Старт», і перша формула з'явиться тут.</div>
+        <div class="fbar"><div class="ref">A1</div><div class="fx">fx</div><input id="chal-in" autocomplete="off" spellcheck="false" placeholder="Твоя версія" aria-label="Твоя версія формули" disabled></div>
+        <div class="timer" id="chal-timer"><i></i></div>
+        <div class="chal-res" id="chal-res" aria-live="polite"></div>
+        <div class="chal-row"><button class="btn" id="chal-go">Старт</button><span class="streak" id="chal-streak"></span></div>
+      </div>
+    </section>
+
+    <section id="rules">
+      <h2>Маніфест клубу</h2>
+      <p class="sub">Шість правил, які кожен учасник дізнався на власних помилках.</p>
+      <div class="rules">
+        <div class="rule"><div class="n">R1</div><div><b>Крапка з комою, не кома</b><span>У нашій локалі аргументи формули розділяє «;». Кома дасть помилку розбору.</span></div></div>
+        <div class="rule"><div class="n">R2</div><div><b>Не об'єднуй клітинки</b><span>Об'єднання ламає сортування, фільтри і половину формул. Вирівнюй по центру виділення.</span></div></div>
+        <div class="rule"><div class="n">R3</div><div><b>Дата — це дата, не текст</b><span>Дата, введена як текст, виглядає правильно, але формули з нею не порахують.</span></div></div>
+        <div class="rule"><div class="n">R4</div><div><b>Спочатку на копії</b><span>Будь-який скрипт або масову заміну перевіряєш на копії файлу, а не на живих даних.</span></div></div>
+        <div class="rule"><div class="n">R5</div><div><b>Закріпи перший рядок</b><span>Заголовки мають бути видно, навіть коли гортаєш до рядка 4 000.</span></div></div>
+        <div class="rule"><div class="n">R6</div><div><b>Одна таблиця — одна правда</b><span>Дані живуть в одному місці. Решта файлів тягне їх через IMPORTRANGE, а не копіює.</span></div></div>
+      </div>
+    </section>
+
+    <section id="errors">
+      <h2>Галерея помилок</h2>
+      <p class="sub">Наші старі знайомі. Прочитай, що вона насправді хоче сказати, а потім клікни — і вона полагодиться.</p>
+      <div class="errs">
+        <div class="err" tabindex="0"><code>#REF!</code><p>«Ти видалила рядок, на який я посилалась. Я все пам'ятаю.»</p><small>посилання на те, чого вже немає</small></div>
+        <div class="err" tabindex="0"><code>#N/A</code><p>«Я шукала. Чесно шукала. Нема.»</p><small>ВПР не знайшов значення</small></div>
+        <div class="err" tabindex="0"><code>#DIV/0!</code><p>«Ділити на нуль я не буду. Навіть заради тебе.»</p><small>ділення на нуль або порожню клітинку</small></div>
+        <div class="err" tabindex="0"><code>#VALUE!</code><p>«Ти дала мені текст і попросила додати. Серйозно?»</p><small>не той тип даних</small></div>
+        <div class="err" tabindex="0"><code>#NAME?</code><p>«Не знаю такої функції. Може, друкарська помилка?»</p><small>невідома назва або лапки забули</small></div>
+        <div class="err" tabindex="0"><code>#ERROR!</code><p>«Ти знову поставила кому замість крапки з комою.»</p><small>помилка розбору формули</small></div>
+      </div>
+    </section>
+
+    <section id="join">
+      <div class="join">
+        <div>
+          <h2>Займи свій рядок</h2>
+          <p id="join-note">Впиши нік і потрап у реєстр. Внесок — одна закріплена шапка таблиці.</p>
+        </div>
+        <form class="join-form" id="join-form" autocomplete="off">
+          <div class="fbar"><div class="ref" id="join-ref">B?</div><div class="fx">fx</div><input id="nick-in" maxlength="24" placeholder="Твій нік у клубі" aria-label="Нік у клубі"></div>
+          <button class="btn" id="join-btn" type="submit">Вступити</button>
+          <button class="btn ghost" id="cert-btn" type="button">🎓 Сертифікат для сторіс</button>
+        </form>
+      </div>
+      <div class="reg">
+        <div class="reg-head"><h3>Реєстр учасників</h3><span id="reg-count"></span></div>
+        <div class="mini"><table><thead><tr><th></th><th>A · Рядок</th><th>B · Нік</th><th>C · Вступ</th></tr></thead><tbody id="reg-body"></tbody></table></div>
+        <p class="reg-note" id="reg-note">Завантажую реєстр…</p>
+      </div>
+    </section>
+
+    <footer>=ПІДСУМОК("Фанклуб таблиць"; "2026") · неофіційний фанатський проєкт, не пов'язаний з Google · <button class="relock" id="relock">замкнути клуб знову</button></footer>
+  </div></div>
+</div>
+
+<script>
+(() => {
+  // headers & row numbers
+  const cols = document.getElementById('cols');
+  cols.innerHTML = '<span></span>' + 'ABCDEFGHIJKLMNOPQRSTU'.split('').map(c => `<span data-c="${c}">${c}</span>`).join('');
+  const rows = document.getElementById('rows');
+  function fillRows(){
+    const n = Math.ceil(document.querySelector('.content').scrollHeight / 34) + 2;
+    let h = ''; for(let i=1;i<=n;i++) h += `<div>${i}</div>`; rows.innerHTML = h;
+  }
+  fillRows(); addEventListener('resize', fillRows);
+
+  // formula bar typing
+  const parts = [['=','sep'],['ФАНКЛУБ','fn'],['(',''],['"таблиці"','str'],[';','sep'],[' "назавжди"','str'],[')','']];
+  const out = document.getElementById('typed');
+  const full = parts.map(([t,c]) => c ? `<span class="${c}">${t}</span>` : t).join('');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { out.innerHTML = full; }
+  else {
+    let pi = 0, ci = 0, html = '';
+    const tick = () => {
+      if (pi >= parts.length) return;
+      const [t,c] = parts[pi]; ci++;
+      const piece = t.slice(0,ci);
+      out.innerHTML = html + (c ? `<span class="${c}">${piece}</span>` : piece);
+      if (ci >= t.length){ html += c ? `<span class="${c}">${t}</span>` : t; pi++; ci = 0; }
+      setTimeout(tick, 70);
+    };
+    setTimeout(tick, 400);
+  }
+
+  // quiz
+  const $ = id => document.getElementById(id);
+  function calc(){
+    const h = Math.max(0, +$('q-hours').value || 0);
+    const f = +$('q-fn').value, t = Math.max(0, +$('q-tabs').value || 0), m = +$('q-merge').value;
+    const s = h*0.4 + f*2 + t*0.3 + m;
+    let r = 'Новачок у клітинці A1';
+    if (s > 8)  r = 'Впевнений користувач фільтрів';
+    if (s > 14) r = 'Майстер зведених таблиць';
+    if (s > 20) r = 'Легенда QUERY';
+    if (m < 0)  r += ' (але з об\'єднаними клітинками 👀)';
+    const cell = $('q-res');
+    cell.innerHTML = `<span class="rank">${r}</span>`;
+    cell.classList.remove('flash'); void cell.offsetWidth; cell.classList.add('flash');
+  }
+  ['q-hours','q-fn','q-tabs','q-merge'].forEach(id => $(id).addEventListener('input', calc));
+  calc();
+
+  $('go-quiz').onclick = () => $('quiz').scrollIntoView({behavior:'smooth'});
+  $('go-join').onclick = () => $('join').scrollIntoView({behavior:'smooth'});
+
+  // ── club registry + leaderboard (shared db) ──
+  const club = { db: null, uid: null, me: null, best: 0, local: false, members: [], scores: [] };
+  const useCap = n => (window.claude && window.claude.use) ? window.claude.use(n).catch(() => null) : Promise.resolve(null);
+  const nf = n => Number(n || 0).toLocaleString('uk-UA');
+  const dmy = t => t ? new Date(t).toLocaleDateString('uk-UA', {day:'2-digit', month:'2-digit', year:'numeric'}) : '';
+  const regNote = t => { $('reg-note').textContent = t; };
+  function celebrate(){
+    document.querySelectorAll('.colhead span[data-c]').forEach((s,i) => setTimeout(() => s.classList.add('on'), i*30));
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const sw = document.createElement('div'); sw.className = 'sweep';
+    const count = Math.ceil(innerWidth/120) * Math.ceil(innerHeight/34);
+    for (let i=0;i<count;i++){ const c = document.createElement('i'); c.style.animationDelay = (Math.random()*0.6)+'s'; sw.appendChild(c); }
+    document.body.appendChild(sw); setTimeout(() => sw.remove(), 1700);
+  }
+  function showMe(){
+    const m = club.me;
+    $('join-ref').textContent = m ? 'B' + m.row : 'B?';
+    if (m) {
+      $('join-note').textContent = `Ти учасник клубу, рядок ${nf(m.row)}. Нік можна змінити в будь-який момент.`;
+      $('join-btn').textContent = 'Змінити нік';
+      if (document.activeElement !== $('nick-in')) $('nick-in').value = m.nick;
+    }
+  }
+  function renderReg(){
+    const body = $('reg-body'); body.textContent = '';
+    const list = club.members.slice().sort((a,b) => (a.row||0) - (b.row||0));
+    $('reg-count').textContent = list.length ? `=РАХУНОК(B:B) → ${nf(list.length)}` : '';
+    list.forEach((m, i) => {
+      const tr = document.createElement('tr'); if (m.id === club.uid) tr.className = 'me';
+      const th = document.createElement('th'); th.textContent = i + 1; tr.appendChild(th);
+      [nf(m.row), m.nick || '—', dmy(m.at)].forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+      body.appendChild(tr);
+    });
+  }
+  function renderLB(){
+    const body = $('lb-body'); if (!body) return; body.textContent = '';
+    club.scores.forEach((s, i) => {
+      const tr = document.createElement('tr'); if (s.id === club.uid) tr.className = 'me';
+      [i + 1, s.nick || '—', nf(s.best)].forEach(v => { const td = document.createElement('td'); td.textContent = v; tr.appendChild(td); });
+      body.appendChild(tr);
+    });
+    let note = '';
+    if (club.local) note = 'Турнірна таблиця працює для колег, які увійшли в Claude.';
+    else if (!club.me) note = 'Щоб потрапити сюди, вступи в клуб: нік вписується внизу сторінки.';
+    else if (!club.scores.length) note = 'Поки порожньо. Зіграй першою — і ти лідер.';
+    $('lb-note').textContent = note;
+  }
+  club.submit = async (score, lines) => {
+    if ((!club.db && !club.sheet) || score <= 0) return;
+    if (!club.me) { toast('Рахунок не записано: спершу вступи в клуб.'); return; }
+    if (score <= club.best) return;
+    club.best = score;
+    try { if (club.sheet) applySheet(await sheetPost({action: 'score', score, lines})); else await club.db.doc('scores/' + club.uid).set({nick: club.me.nick, best: score, lines, at: Date.now()}); toast('Новий рекорд у турнірній таблиці!', true); }
+    catch (e) { toast('Не вдалося записати рахунок.'); }
+  };
+
+  // ── Google Sheets backend (used on the public site; empty here) ──
+  const SHEET_API = 'https://script.google.com/macros/s/AKfycbw6st4W2Q-LN8QErKmbo3C_yi4SZmb1pZxoVt5_sI8HmzrcTXYbCtK7Il6tMEOY_Z19/exec';
+  function sid(){
+    let s = null; try { s = localStorage.getItem('club-sid'); } catch (e) {}
+    if (!s) { const a = new Uint8Array(12); crypto.getRandomValues(a); s = Array.from(a, b => b.toString(16).padStart(2, '0')).join(''); try { localStorage.setItem('club-sid', s); } catch (e) {} }
+    return s;
+  }
+  function applySheet(d){
+    if (!d || d.error) return;
+    club.members = (d.members || []).map(m => ({id: 'r' + m.row, row: m.row, nick: m.nick, at: m.at}));
+    club.me = d.me ? {nick: d.me.nick, row: d.me.row, at: d.me.at} : null;
+    club.uid = club.me ? 'r' + club.me.row : '__none';
+    club.scores = (d.scores || []).map(s => ({id: 'r' + s.row, nick: s.nick, best: s.best}));
+    club.best = Math.max(club.best, d.myBest || 0);
+    renderReg(); showMe(); renderLB();
+    regNote(club.members.length ? '' : 'Реєстр порожній. Стань учасником номер 1.');
+  }
+  const sheetGet = () => fetch(SHEET_API + '?id=' + encodeURIComponent(sid())).then(r => r.json());
+  async function sheetPost(body){
+    const r = await fetch(SHEET_API, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({id: sid()}, body))});
+    const d = await r.json(); if (d.error) throw new Error(d.error); return d;
+  }
+
+  (async () => {
+    if (SHEET_API) {
+      club.sheet = true;
+      const load = () => sheetGet().then(applySheet).catch(() => regNote('Реєстр поки не відповідає. Спробуй трохи пізніше.'));
+      load(); setInterval(() => { if (!document.hidden) load(); }, 15000);
+      return;
+    }
+    const db = await useCap('db');
+    const user = db ? await useCap('user') : null;
+    const uid = user ? await user.id().catch(() => null) : null;
+    if (!db || !uid) {
+      club.local = true;
+      try { club.me = JSON.parse(localStorage.getItem('club-me') || 'null'); } catch (e) {}
+      if (club.me) { club.members = [Object.assign({id: 'local'}, club.me)]; club.uid = 'local'; }
+      renderReg(); showMe(); renderLB();
+      regNote('Спільний реєстр не відкрився в цьому вікні. Відкрий сайт у браузері на claude.ai, увійшовши в акаунт, — там видно всіх учасників. Тут твій вступ збережеться лише в цьому браузері.');
+      return;
+    }
+    club.db = db; club.uid = uid;
+    const slow = setTimeout(() => regNote('Реєстр поки не відповідає. Дані можуть бути неактуальні.'), 10000);
+    db.collection('members').orderBy('row').limit(1000).onSnapshot(snap => {
+      if (!snap.metadata.fromCache) clearTimeout(slow);
+      club.members = snap.docs.map(d => Object.assign({id: d.id}, d.data()));
+      club.me = club.members.find(m => m.id === uid) || null;
+      renderReg(); showMe(); renderLB();
+      regNote(club.members.length ? '' : 'Реєстр порожній. Стань учасником номер 1.');
+    }, () => { clearTimeout(slow); regNote('Не вдалося завантажити реєстр. Онови сторінку трохи пізніше.'); });
+    db.collection('scores').orderBy('best', 'desc').limit(10).onSnapshot(snap => {
+      club.scores = snap.docs.map(d => Object.assign({id: d.id}, d.data()));
+      const mine = club.scores.find(s => s.id === uid); if (mine) club.best = Math.max(club.best, mine.best || 0);
+      renderLB();
+    }, () => { $('lb-note').textContent = 'Турнірна таблиця зараз недоступна.'; });
+    db.doc('scores/' + uid).get().then(s => { if (s.exists) club.best = Math.max(club.best, s.data().best || 0); }).catch(() => {});
+  })();
+
+  $('join-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const inp = $('nick-in'), btn = $('join-btn');
+    const nick = inp.value.trim().replace(/\s+/g, ' ').slice(0, 24);
+    if (!nick) { regNote('Порожня клітинка не рахується. Впиши нік.'); inp.focus(); return; }
+    if (nick.includes(',')) { const r = inp.getBoundingClientRect(); inp.value = ''; boom(r.left + r.width/2, r.top + r.height/2); return; }
+    if (club.me && club.me.nick === nick) { toast('Це вже твій нік ;)', true); return; }
+    const wasMember = !!club.me;
+    const row = club.me ? club.me.row : club.members.reduce((m, x) => Math.max(m, x.row || 0), 0) + 1;
+    const at = club.me ? club.me.at : Date.now();
+    btn.disabled = true;
+    try {
+      if (club.sheet) {
+        applySheet(await sheetPost({action: 'join', nick}));
+      } else if (club.db) {
+        await club.db.doc('members/' + club.uid).set({nick, row, at});
+        if (club.best > 0) await club.db.doc('scores/' + club.uid).update({nick}).catch(() => {});
+      } else {
+        const r = club.me ? row : 1000 + rand(9000);
+        club.me = {nick, row: r, at}; club.uid = 'local';
+        try { localStorage.setItem('club-me', JSON.stringify(club.me)); } catch (e2) {}
+        club.members = [Object.assign({id: 'local'}, club.me)]; renderReg(); showMe(); renderLB();
+      }
+      if (!wasMember) { celebrate(); toast(`Вітаємо в клубі, ${nick}! Твій рядок — ${nf(club.me ? club.me.row : row)}.`, true); }
+      else toast('Нік оновлено.', true);
+    } catch (err) {
+      regNote('Не вийшло зберегти. Схоже, у тебе доступ лише на перегляд цієї сторінки.');
+    }
+    btn.disabled = false;
+  });
+
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rand = n => Math.floor(Math.random()*n);
+
+  // 1. fill handle → autofill cascade
+  const semi = $('semi');
+  $('handle').addEventListener('click', () => {
+    semi.querySelectorAll('.ghost,.tip').forEach(g => g.remove());
+    for (let i=1;i<=5;i++){
+      const g = document.createElement('span'); g.className = 'ghost'; g.textContent = ';';
+      g.style.top = (i*110)+'%'; g.style.animationDelay = (i*90)+'ms'; semi.appendChild(g);
+    }
+    const t = document.createElement('span'); t.className = 'tip'; t.textContent = 'Автозаповнення: ;;;;;'; semi.appendChild(t);
+    setTimeout(() => semi.querySelectorAll('.ghost,.tip').forEach(g => g.remove()), 2600);
+  });
+
+  // 2. errors fix themselves
+  const fixes = {
+    '#REF!':   ['42', 'Полагоджено: повернули рядок, на який посилалась формула.'],
+    '#N/A':    ['Знайдено ✓', 'Полагоджено: у ВПР додали останній аргумент 0 і прибрали зайві пробіли.'],
+    '#DIV/0!': ['0', 'Полагоджено: обгорнули формулу в ЯКЩОПОМИЛКА(…; 0).'],
+    '#VALUE!': ['128', 'Полагоджено: текст «128» перетворили на число.'],
+    '#NAME?':  ['=СУМ(A1:A9)', 'Полагоджено: виправили назву функції.'],
+    '#ERROR!': ['=ВПР(A2; Ціни!A:B; 2; 0)', 'Полагоджено: кому замінили на крапку з комою. Як завжди.']
+  };
+  document.querySelectorAll('.err').forEach(card => {
+    const code = card.querySelector('code'), p = card.querySelector('p');
+    const orig = [code.textContent, p.textContent], fx = fixes[orig[0]];
+    const toggle = () => {
+      if (card.classList.contains('fixed')) { card.classList.remove('fixed'); code.textContent = orig[0]; p.textContent = orig[1]; return; }
+      card.classList.add('shake');
+      setTimeout(() => { card.classList.remove('shake'); card.classList.add('fixed'); code.textContent = fx[0]; p.textContent = fx[1]; }, calm ? 0 : 450);
+    };
+    card.addEventListener('click', toggle);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  });
+
+  // toast
+  const toastEl = $('toast'); let tt;
+  function toast(msg, ok){
+    toastEl.textContent = msg; toastEl.classList.toggle('ok', !!ok); toastEl.classList.add('show');
+    clearTimeout(tt); tt = setTimeout(() => toastEl.classList.remove('show'), 2600);
+  }
+  function sweep(){
+    if (calm) return;
+    const sw = document.createElement('div'); sw.className = 'sweep';
+    const count = Math.ceil(innerWidth/120) * Math.ceil(innerHeight/34);
+    for (let i=0;i<count;i++){ const c = document.createElement('i'); c.style.animationDelay = (Math.random()*0.6)+'s'; sw.appendChild(c); }
+    document.body.appendChild(sw); setTimeout(() => sw.remove(), 1700);
+  }
+
+  // gate: secret question
+  const gate = $('gate'), sheet = document.querySelector('.sheet'), lock = $('gate-form'), msg = $('gate-msg');
+  let unlocked = false, fails = 0;
+  try { unlocked = localStorage.getItem('club-unlocked') === '1'; } catch(e) {}
+  function setLocked(on){
+    gate.classList.toggle('open', !on);
+    sheet.inert = on; document.querySelector('.colhead').inert = on;
+    if (on) { $('gate-in').value = ''; msg.textContent = ''; fails = 0; setTimeout(() => $('gate-in').focus(), 50); }
+  }
+  setLocked(!unlocked);
+  const wrongLines = {
+    ',': 'Кома?! Охорона, виведіть цю людину.',
+    'кома': 'Кома?! Охорона, виведіть цю людину.',
+    '.': 'Крапка — це лише половина відповіді.',
+    'крапка': 'Крапка — це лише половина відповіді.'
+  };
+  lock.addEventListener('submit', e => {
+    e.preventDefault();
+    const v = $('gate-in').value.trim().toLowerCase().replace(/^=/,'').replace(/["«»()]/g,'').trim();
+    const right = [';', 'крапка з комою', 'крапка зі комою', 'крапка з комою ;', 'semicolon', 'точка с запятой'];
+    if (right.includes(v)) {
+      try { localStorage.setItem('club-unlocked','1'); } catch(e) {}
+      msg.className = 'hint'; msg.textContent = '';
+      setLocked(false); sweep(); toast('Доступ відкрито. Свої вдома ;)', true);
+      return;
+    }
+    fails++;
+    lock.classList.remove('shake'); void lock.offsetWidth; lock.classList.add('shake');
+    msg.className = '';
+    msg.textContent = wrongLines[v] || (v ? '#N/A — такої відповіді не знайдено.' : 'Порожня клітинка не рахується.');
+    if (fails >= 3 && !wrongLines[v]) { msg.className = 'hint'; msg.textContent = 'Підказка: це два розділові знаки в одному.'; }
+  });
+  $('relock').addEventListener('click', () => { try { localStorage.removeItem('club-unlocked'); } catch(e) {} scrollTo(0,0); setLocked(true); });
+
+  // easter eggs: typing a comma, or certain words, anywhere on the page
+  let buf = '';
+  const eggs = [
+    ['впр', 'ВПР — класика. Але ти чува про XLOOKUP? 👀', true],
+    ['vlookup', 'ВПР — класика. Але ти чува про XLOOKUP? 👀', true],
+    ['ctrlz', 'Скасовувати тут нічого. Але в житті потренуйся сама.', true],
+    ['обєднати', 'НІ. Об’єднані клітинки заборонені статутом клубу (пункт R2).', false]
+  ];
+  document.addEventListener('keydown', e => {
+    if (!gate.classList.contains('open')) return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+    if (e.ctrlKey && e.key.toLowerCase() === 'z') { toast(eggs[2][1], true); return; }
+    if (e.key === ',') {
+      toast('Кома?! У ЦЬОМУ клубі?!');
+      if (!calm) { document.body.classList.remove('quake'); void document.body.offsetWidth; document.body.classList.add('quake'); }
+      return;
+    }
+    if (e.key === ';') { toast('❤ ❤ ❤', true); sweep(); return; }
+    if (e.key.length !== 1) return;
+    buf = (buf + e.key.toLowerCase()).slice(-12);
+    for (const [w, text, ok] of eggs) if (buf.endsWith(w)) { toast(text, ok); buf = ''; }
+  });
+
+  // editable grid: click any empty cell and type
+  const rnW = () => document.querySelector('.rownums').getBoundingClientRect().width;
+  const store = (() => { try { return JSON.parse(localStorage.getItem('club-cells') || '{}'); } catch(e) { return {}; } })();
+  const save = () => { try { localStorage.setItem('club-cells', JSON.stringify(store)); } catch(e) {} };
+  const cellEls = {};
+  function evaluate(raw){
+    if (!raw.startsWith('=')) return {text: raw, num: /^-?\d+([.,]\d+)?$/.test(raw)};
+    const ex = raw.slice(1).trim();
+    const fn = ex.match(/^(СУМ|SUM|СРЗНАЧ|AVERAGE|МАКС|MAX|МІН|MIN)\s*\((.*)\)$/i);
+    if (ex.includes(',') && !(fn && !fn[2].includes(';') && !fn[2].includes(','))) {
+      toast('Кома в формулі?! У нас крапка з комою.');
+      return {text:'#ERROR!', bad:true};
+    }
+    if (fn) {
+      const nums = fn[2].split(';').map(s => parseFloat(s.trim().replace(',', '.'))).filter(n => !isNaN(n));
+      if (!nums.length) return {text:'#VALUE!', bad:true};
+      const k = fn[1].toUpperCase(); let r;
+      if (['СУМ','SUM'].includes(k)) r = nums.reduce((a,b)=>a+b,0);
+      else if (['СРЗНАЧ','AVERAGE'].includes(k)) r = nums.reduce((a,b)=>a+b,0)/nums.length;
+      else if (['МАКС','MAX'].includes(k)) r = Math.max(...nums);
+      else r = Math.min(...nums);
+      return {text: String(+r.toFixed(4)), num:true};
+    }
+    if (/^[\d\s+\-*/().]+$/.test(ex)) {
+      if (/\/\s*0(?![\d.])/.test(ex)) return {text:'#DIV/0!', bad:true};
+      try { const r = Function('"use strict";return (' + ex + ')')(); if (isFinite(r)) return {text: String(+r.toFixed(4)), num:true}; } catch(e) {}
+      return {text:'#ERROR!', bad:true};
+    }
+    if (/^(ВПР|VLOOKUP)/i.test(ex)) return {text:'#N/A', bad:true};
+    return {text:'#NAME?', bad:true};
+  }
+  function place(el, c, r){ el.style.transform = `translate(${rnW() + c*120}px, ${24 + r*34}px)`; }
+  function render(key){
+    const [c, r] = key.split(',').map(Number);
+    let el = cellEls[key];
+    if (!store[key]) { if (el) { el.remove(); delete cellEls[key]; } return; }
+    if (!el) { el = document.createElement('div'); el.className = 'usercell'; el.dataset.key = key; document.body.appendChild(el); cellEls[key] = el; }
+    const v = evaluate(store[key]);
+    el.textContent = v.text; el.title = store[key];
+    el.classList.toggle('num', !!v.num); el.classList.toggle('bad', !!v.bad);
+    place(el, c, r);
+  }
+  Object.keys(store).forEach(render);
+  addEventListener('resize', () => Object.keys(cellEls).forEach(k => { const [c,r] = k.split(',').map(Number); place(cellEls[k], c, r); }));
+  let editor = null;
+  function edit(c, r){
+    if (editor) editor.blur();
+    const key = c + ',' + r;
+    const inp = document.createElement('input'); inp.className = 'cell-editor'; inp.id = 'cell-editor';
+    inp.setAttribute('aria-label', 'Клітинка ' + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[c % 26] + (r+1));
+    inp.value = store[key] || ''; place(inp, c, r);
+    if (cellEls[key]) cellEls[key].style.visibility = 'hidden';
+    document.body.appendChild(inp); editor = inp; inp.focus();
+    let done = false;
+    const commit = keep => {
+      if (done) return; done = true;
+      if (keep) {
+        const v = inp.value.trim();
+        if (v.includes(',')) { const rc = inp.getBoundingClientRect(); delete store[key]; save(); setTimeout(() => boom(rc.left + rc.width/2, rc.top + rc.height/2), 0); }
+        else { if (v) store[key] = v; else delete store[key]; save(); }
+      }
+      inp.remove(); editor = null;
+      if (cellEls[key]) cellEls[key].style.visibility = '';
+      render(key);
+    };
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); commit(true); edit(c, r+1); }
+      else if (e.key === 'Tab') { e.preventDefault(); commit(true); edit(c+1, r); }
+      else if (e.key === 'Escape') commit(false);
+    });
+    inp.addEventListener('blur', () => commit(true));
+  }
+  const busy = '#tetris,#cert,.dmg,.chal,.reg,.cta,.errs,.rules,footer,button,input,select,textarea,a,label,.err,.mini,.rule,.join,.fbar,h1,h2,p,code,small,.tag,.hint-line,.lock,#gate';
+  document.addEventListener('click', e => {
+    if (!gate.classList.contains('open')) return;
+    if (e.target.closest('.cell-editor')) return;
+    const uc = e.target.closest('.usercell');
+    if (!uc && e.target.closest(busy)) return;
+    if (e.target.closest('.colhead,.rownums')) return;
+    const x = e.pageX - rnW(), y = e.pageY - 24;
+    if (x < 0 || y < 0) return;
+    edit(Math.floor(x/120), Math.floor(y/34));
+  });
+
+  // comma in a cell → the club explodes
+  function boom(x, y){
+    toast('💥 КОМА?! Клуб вибухнув.');
+    bang();
+    if (calm) return;
+    cracks(x, y);
+    document.body.classList.remove('flashbang'); void document.body.offsetWidth; document.body.classList.add('flashbang');
+    const bc = document.createElement('canvas'); bc.id = 'boom'; document.body.appendChild(bc);
+    const d = devicePixelRatio || 1, W = innerWidth, H = innerHeight;
+    bc.width = W*d; bc.height = H*d; bc.style.width = W+'px'; bc.style.height = H+'px';
+    const g = bc.getContext('2d'); g.scale(d, d);
+    const cols = ['#b7e1cd','#f4c7c3','#c9daf8','#fce8b2','#d9d2e9','#c5221f','#2a5bd7'];
+    const words = [',', ',', '#REF!', '#N/A', ',', '#ERROR!', '=ВПР(', ',', '#DIV/0!'];
+    const ps = [];
+    for (let i=0;i<170;i++){
+      const a = Math.random()*Math.PI*2, sp = 4 + Math.random()*17;
+      ps.push({x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 7, r:Math.random()*6, vr:(Math.random()-.5)*.4,
+        w:14 + Math.random()*40, h:10 + Math.random()*20, col:cols[i % cols.length], t: i % 4 === 0 ? words[i % words.length] : null});
+    }
+    const t0 = performance.now();
+    (function f(now){
+      const t = now - t0; g.clearRect(0, 0, W, H); g.globalAlpha = Math.max(0, 1 - t/1900);
+      for (const p of ps){
+        p.vy += .45; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+        g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.fillStyle = p.col;
+        if (p.t) { g.font = '700 22px "JetBrains Mono", monospace'; g.fillText(p.t, 0, 0); }
+        else { g.fillRect(-p.w/2, -p.h/2, p.w, p.h); g.strokeStyle = 'rgba(0,0,0,.25)'; g.strokeRect(-p.w/2, -p.h/2, p.w, p.h); }
+        g.restore();
+      }
+      if (t < 1900) requestAnimationFrame(f); else bc.remove();
+    })(t0);
+    const parts = [...document.querySelectorAll('.wrap > .fbar, .hero > *, section > *, footer, .rownums, .colhead')];
+    parts.forEach(el => {
+      el.style.setProperty('--dx', (Math.random()-.5)*W*.9 + 'px');
+      el.style.setProperty('--dy', (Math.random()-.5)*H*.9 + 'px');
+      el.style.setProperty('--rot', (Math.random()-.5)*120 + 'deg');
+      el.classList.remove('reassemble'); el.classList.add('blown');
+    });
+    setTimeout(() => {
+      parts.forEach(el => { el.classList.add('reassemble'); el.classList.remove('blown'); });
+      setTimeout(() => { parts.forEach(el => el.classList.remove('reassemble')); damage(); }, 950);
+    }, 1500);
+  }
+
+  // Таблікс: spreadsheet tetris
+  (() => {
+    const ov = $('tetris'), cv = $('tx-board'), nx = $('tx-next'), ctx = cv.getContext('2d'), nctx = nx.getContext('2d');
+    const COLS = 10, ROWS = 20, HEAD = 22, RN = 26;
+    const SH = {I:[[1,1,1,1]], O:[[1,1],[1,1]], T:[[0,1,0],[1,1,1]], S:[[0,1,1],[1,1,0]], Z:[[1,1,0],[0,1,1]], J:[[1,0,0],[1,1,1]], L:[[0,0,1],[1,1,1]]};
+    const COL = {I:'#a2d8d0', O:'#fce8b2', T:'#d9d2e9', S:'#b7e1cd', Z:'#f4c7c3', J:'#c9daf8', L:'#fbd5b5'};
+    const MSG = ['', 'Рядок видалено. Жодного #REF!, чисто.', 'Два рядки! Дублікати видалено.', 'Три рядки! Фільтр спрацював ідеально.', 'ТАБЛІКС! Чотири рядки одним махом.'];
+    let S = 26, board = null, cur, nxt, score = 0, lines = 0, level = 1, acc = 0, last = 0, over = false, paused = false, clearing = null, raf = 0, bag = [], best = 0;
+    try { best = +localStorage.getItem('tx-best') || 0; } catch(e) {}
+    const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    const pick = () => { if (!bag.length) bag = Object.keys(SH).sort(() => Math.random() - .5); return bag.pop(); };
+    const make = k => { const m = SH[k].map(r => r.map(v => v ? 1 + rand(98) : 0)); return {k, m, x: Math.floor((COLS - m[0].length)/2), y: 0}; };
+    const hit = (m, x, y) => m.some((row, r) => row.some((v, c) => { if (!v) return false; const X = x + c, Y = y + r; return X < 0 || X >= COLS || Y >= ROWS || (Y >= 0 && !!board[Y][X]); }));
+    const rot = m => m[0].map((_, c) => m.map(row => row[c]).reverse());
+    const fmt = n => n.toLocaleString('uk-UA');
+    function reset(){
+      board = Array.from({length: ROWS}, () => Array(COLS).fill(null));
+      score = 0; lines = 0; level = 1; over = false; paused = false; clearing = null; bag = []; acc = 0;
+      cur = make(pick()); nxt = make(pick()); ui();
+    }
+    function ui(){
+      $('tx-score').textContent = fmt(score); $('tx-lines').textContent = lines; $('tx-level').textContent = level; $('tx-best').textContent = fmt(best);
+      $('tx-fx').textContent = over ? '=ЯКЩОПОМИЛКА(ГРА; "ще раз")' : paused ? '=ПАУЗА()' : `=ТАБЛІКС(${lines}; ${level}) → ${fmt(score)}`;
+      $('tx-pause').textContent = paused ? 'Далі' : 'Пауза';
+      drawNext();
+    }
+    function spawn(){ cur = nxt; nxt = make(pick()); if (hit(cur.m, cur.x, cur.y)) gameOver(); ui(); }
+    function gameOver(){ over = true; if (score > best) { best = score; try { localStorage.setItem('tx-best', best); } catch(e) {} } ui(); club.submit(score, lines); }
+    function lock(){
+      let out = false;
+      cur.m.forEach((row, r) => row.forEach((v, c) => { if (!v) return; const Y = cur.y + r; if (Y < 0) { out = true; return; } board[Y][cur.x + c] = {v, col: COL[cur.k]}; }));
+      if (out) return gameOver();
+      const full = []; board.forEach((row, i) => { if (row.every(Boolean)) full.push(i); });
+      if (full.length) clearing = {rows: full, t: performance.now()}; else spawn();
+    }
+    function finishClear(){
+      const n = clearing.rows.length;
+      board = board.filter((_, i) => !clearing.rows.includes(i));
+      while (board.length < ROWS) board.unshift(Array(COLS).fill(null));
+      lines += n; score += [0,100,300,500,800][n] * level; level = 1 + Math.floor(lines/10);
+      toast(MSG[n], true); clearing = null; spawn();
+    }
+    const interval = () => Math.max(90, 800 - (level - 1)*70);
+    const move = dx => { if (!hit(cur.m, cur.x + dx, cur.y)) cur.x += dx; };
+    function turn(){ const m = rot(cur.m); for (const k of [0,-1,1,-2,2]) if (!hit(m, cur.x + k, cur.y)) { cur.m = m; cur.x += k; return; } }
+    function down(user){ if (!hit(cur.m, cur.x, cur.y + 1)) { cur.y++; if (user) score++; } else lock(); acc = 0; ui(); }
+    function drop(){ let n = 0; while (!hit(cur.m, cur.x, cur.y + 1)) { cur.y++; n++; } score += n*2; lock(); acc = 0; ui(); }
+    function block(g, x, y, s, col, v){
+      g.fillStyle = col; g.fillRect(x + 1, y + 1, s - 1, s - 1);
+      g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 1; g.strokeRect(x + 1.5, y + 1.5, s - 2, s - 2);
+      if (v && s >= 18) { g.fillStyle = '#1b2a20'; g.font = `500 ${Math.round(s*.36)}px "JetBrains Mono", monospace`; g.textAlign = 'right'; g.textBaseline = 'middle'; g.fillText(v, x + s - 3, y + s/2 + 1); }
+    }
+    const at = (c, r) => [RN + c*S, HEAD + r*S];
+    function draw(){
+      const W = RN + COLS*S, H = HEAD + ROWS*S;
+      ctx.fillStyle = css('--paper'); ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = css('--head'); ctx.fillRect(0, 0, W, HEAD); ctx.fillRect(0, 0, RN, H);
+      ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1; ctx.beginPath();
+      for (let c = 0; c <= COLS; c++) { const x = RN + c*S + .5; ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+      for (let r = 0; r <= ROWS; r++) { const y = HEAD + r*S + .5; ctx.moveTo(0, y); ctx.lineTo(W, y); }
+      ctx.stroke();
+      ctx.fillStyle = css('--muted'); ctx.font = '500 10px "JetBrains Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (let c = 0; c < COLS; c++) ctx.fillText('ABCDEFGHIJ'[c], RN + c*S + S/2, HEAD/2 + 1);
+      for (let r = 0; r < ROWS; r++) ctx.fillText(r + 1, RN/2, HEAD + r*S + S/2 + 1);
+      board.forEach((row, r) => row.forEach((b, c) => { if (b) { const [x, y] = at(c, r); block(ctx, x, y, S, b.col, b.v); } }));
+      if (clearing) {
+        const k = Math.min(1, (performance.now() - clearing.t)/240);
+        ctx.fillStyle = css('--cf'); clearing.rows.forEach(r => ctx.fillRect(RN, HEAD + r*S, COLS*S*k, S));
+      } else if (!over) {
+        let gy = cur.y; while (!hit(cur.m, cur.x, gy + 1)) gy++;
+        ctx.setLineDash([4, 3]); ctx.strokeStyle = css('--select');
+        cur.m.forEach((row, r) => row.forEach((v, c) => { if (v) { const [x, y] = at(cur.x + c, gy + r); ctx.strokeRect(x + 2.5, y + 2.5, S - 4, S - 4); } }));
+        ctx.setLineDash([]);
+        cur.m.forEach((row, r) => row.forEach((v, c) => { if (v) { const [x, y] = at(cur.x + c, cur.y + r); block(ctx, x, y, S, COL[cur.k], v); } }));
+      }
+      if (over || paused) {
+        ctx.globalAlpha = .85; ctx.fillStyle = css('--paper'); ctx.fillRect(RN, HEAD, COLS*S, ROWS*S); ctx.globalAlpha = 1;
+        const cx = RN + COLS*S/2, cy = HEAD + ROWS*S/2;
+        ctx.textAlign = 'center'; ctx.fillStyle = over ? css('--err') : css('--ink');
+        ctx.font = `700 ${Math.round(S*1.4)}px "JetBrains Mono", monospace`; ctx.fillText(over ? '#N/A' : '=ПАУЗА()', cx, cy - S);
+        ctx.fillStyle = css('--ink'); ctx.font = `500 ${Math.round(S*.52)}px "Golos Text", sans-serif`;
+        ctx.fillText(over ? 'Місця не знайдено' : 'Натисни P, щоб продовжити', cx, cy + S*.3);
+        if (over) ctx.fillText(`Очки: ${fmt(score)}`, cx, cy + S*1.2);
+      }
+    }
+    function drawNext(){
+      const s = 18; nctx.fillStyle = css('--paper'); nctx.fillRect(0, 0, 72, 54);
+      const m = nxt.m, ox = (72 - m[0].length*s)/2, oy = (54 - m.length*s)/2;
+      m.forEach((row, r) => row.forEach((v, c) => { if (v) block(nctx, ox + c*s, oy + r*s, s, COL[nxt.k], 0); }));
+    }
+    function loop(now){
+      const dt = now - last; last = now;
+      if (!over && !paused) {
+        if (clearing) { if (now - clearing.t > 260) finishClear(); }
+        else { acc += dt; if (acc > interval()) down(false); }
+      }
+      draw(); raf = requestAnimationFrame(loop);
+    }
+    function size(){
+      const small = innerWidth < 640 || matchMedia('(pointer:coarse)').matches;
+      const availH = innerHeight - (small ? 340 : 190), availW = small ? innerWidth - 70 : innerWidth - 560;
+      S = Math.max(14, Math.min(30, Math.floor((availH - HEAD)/ROWS), Math.floor((availW - RN)/COLS)));
+      const w = RN + COLS*S, h = HEAD + ROWS*S, d = devicePixelRatio || 1;
+      cv.width = w*d; cv.height = h*d; cv.style.width = w + 'px'; cv.style.height = h + 'px'; ctx.setTransform(d, 0, 0, d, 0, 0);
+      nx.width = 72*d; nx.height = 54*d; nx.style.width = '72px'; nx.style.height = '54px'; nctx.setTransform(d, 0, 0, d, 0, 0);
+    }
+    function open(){
+      ov.hidden = false; document.body.style.overflow = 'hidden'; size();
+      if (!board || over) reset(); paused = false; ui();
+      last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); cv.focus();
+    }
+    function close(){ ov.hidden = true; document.body.style.overflow = ''; cancelAnimationFrame(raf); if (!over) paused = true; $('go-game').focus(); }
+    $('go-game').addEventListener('click', open);
+    $('tx-close').addEventListener('click', close);
+    $('tx-restart').addEventListener('click', () => { reset(); cv.focus(); });
+    $('tx-pause').addEventListener('click', () => { if (!over) { paused = !paused; ui(); } cv.focus(); });
+    ov.addEventListener('click', e => { if (e.target === ov) close(); });
+    document.addEventListener('keydown', e => {
+      if (ov.hidden) return;
+      const k = e.key; let used = true;
+      if (k === 'Escape') close();
+      else if ('pPзЗ'.includes(k) && k.length === 1) { if (!over) { paused = !paused; ui(); } }
+      else if (over || paused || clearing) used = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(k);
+      else if (k === 'ArrowLeft') move(-1);
+      else if (k === 'ArrowRight') move(1);
+      else if (k === 'ArrowUp') turn();
+      else if (k === 'ArrowDown') down(true);
+      else if (k === ' ') drop();
+      else used = false;
+      if (used) { e.preventDefault(); e.stopImmediatePropagation(); }
+    }, true);
+    const act = {left: () => move(-1), right: () => move(1), rot: turn, down: () => down(true), drop};
+    document.querySelectorAll('.tx-pad button').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); if (!over && !paused && !clearing) act[b.dataset.a](); }));
+    addEventListener('resize', () => { if (!ov.hidden) size(); });
+  })();
+
+  // ── explosion extras: sound, cracks, damage report ──
+  let actx = null;
+  function bang(){
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = actx.currentTime, len = Math.floor(actx.sampleRate * 1.2), buf = actx.createBuffer(1, len, actx.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random()*2 - 1) * Math.pow(1 - i/len, 3);
+      const src = actx.createBufferSource(); src.buffer = buf;
+      const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(1800, t); lp.frequency.exponentialRampToValueAtTime(120, t + 1);
+      const g = actx.createGain(); g.gain.value = .7;
+      src.connect(lp); lp.connect(g); g.connect(actx.destination); src.start();
+      const o = actx.createOscillator(), og = actx.createGain();
+      o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(30, t + .5);
+      og.gain.setValueAtTime(.9, t); og.gain.exponentialRampToValueAtTime(.001, t + .6);
+      o.connect(og); og.connect(actx.destination); o.start(); o.stop(t + .6);
+    } catch (e) {}
+  }
+  function cracks(x, y){
+    const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'); svg.id = 'cracks';
+    for (let i = 0; i < 14; i++) {
+      let a = Math.random()*Math.PI*2, px = x, py = y, L = 0, dstr = `M${x} ${y}`;
+      const segs = 4 + rand(5);
+      for (let s = 0; s < segs; s++) { const step = 30 + Math.random()*80; a += (Math.random() - .5)*.9; px += Math.cos(a)*step; py += Math.sin(a)*step; L += step; dstr += ` L${px.toFixed(1)} ${py.toFixed(1)}`; }
+      const p = document.createElementNS(ns, 'path'); p.setAttribute('d', dstr);
+      p.style.strokeDasharray = L; p.style.setProperty('--len', L); p.style.animationDelay = (i*15) + 'ms';
+      svg.appendChild(p);
+    }
+    document.body.appendChild(svg);
+    setTimeout(() => { svg.style.transition = 'opacity .6s'; svg.style.opacity = '0'; }, 1300);
+    setTimeout(() => svg.remove(), 2000);
+  }
+  function damage(){
+    document.querySelectorAll('.dmg').forEach(b => b.remove());
+    const cells = Math.ceil(document.body.scrollHeight/34) * Math.ceil(innerWidth/120);
+    const rows = [['Знищено клітинок', cells], ['Зламано формул', 40 + rand(400)], ['Втрачено #REF!', 1 + rand(99)], ['Нервових клітин', 1 + rand(9)], ['Ком знешкоджено', 1]];
+    const box = document.createElement('div'); box.className = 'dmg'; box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-label', 'Звіт про збитки');
+    box.innerHTML = '<h3>Звіт про збитки</h3><table></table><button class="btn">Більше ніколи</button>';
+    const tb = box.querySelector('table');
+    rows.forEach(([k, v]) => {
+      const tr = document.createElement('tr'), a = document.createElement('td'), b = document.createElement('td');
+      a.textContent = k; b.textContent = '0'; tr.append(a, b); tb.appendChild(tr);
+      const t0 = performance.now();
+      (function up(now){ const p = Math.min(1, (now - t0)/900); b.textContent = Math.round(v * (1 - Math.pow(1 - p, 3))).toLocaleString('uk-UA'); if (p < 1) requestAnimationFrame(up); })(t0);
+    });
+    const done = () => { if (!box.isConnected) return; box.remove(); toast('Кому знешкоджено. Клуб відновлено ;)', true); };
+    box.querySelector('button').addEventListener('click', done);
+    document.body.appendChild(box);
+    setTimeout(done, 6500);
+  }
+
+  // ── anonymous animals: only on empty cells ──
+  const PAL = ['#e8590c','#7048e8','#0c8599','#d6336c','#2b8a3e','#1c7ed6','#f08c00','#ae3ec9'];
+  const colorFor = s => { let h = 0; for (const ch of String(s)) h = (h*31 + ch.charCodeAt(0)) >>> 0; return PAL[h % PAL.length]; };
+  const taken = busy + ',.usercell,.colhead,.rownums,.mini,.sub,.formula';
+  const isEmptyAt = (vx, vy) => { const el = document.elementFromPoint(vx, vy); return !!el && !el.closest(taken); };
+  const animalLines = ['=СУМ(B2:B40', '=ВПР(A2;', 'ой', '=QUERY(A:F; "select', '#REF!', 'хто це видалив', '=ЯКЩО(', 'ок', ';;;'];
+  function spawnAnimal(name, col, fast){
+    const el = document.createElement('div'); el.className = 'peer'; el.style.setProperty('--pc', col);
+    const who = document.createElement('span'); who.className = 'who'; who.textContent = name;
+    const ink = document.createElement('span'); ink.className = 'ink';
+    el.append(who, ink); el.style.opacity = '0'; document.body.appendChild(el);
+    let alive = true, tmo = 0;
+    const hop = () => {
+      if (!alive) return;
+      const cols = Math.max(2, Math.floor((innerWidth - rnW())/120));
+      for (let k = 0; k < 20; k++) {
+        const c = rand(cols), r = Math.floor((scrollY + 40 + rand(Math.max(120, innerHeight - 80)))/34);
+        const vx = rnW() + c*120 + 60, vy = 24 + r*34 + 17 - scrollY;
+        if (vx > innerWidth - 10 || vy < 30 || vy > innerHeight - 10) continue;
+        if (fast || (isEmptyAt(vx - 50, vy) && isEmptyAt(vx + 50, vy))) { el.style.transform = `translate(${rnW() + c*120}px, ${24 + r*34}px)`; el.style.opacity = '1'; break; }
+      }
+      ink.textContent = '';
+      if (Math.random() < .55) { const s = animalLines[rand(animalLines.length)]; let i = 0; setTimeout(function type(){ if (!alive) return; ink.textContent = s.slice(0, ++i); if (i < s.length) setTimeout(type, fast ? 40 : 90); }, fast ? 200 : 800); }
+      tmo = setTimeout(hop, fast ? 600 + rand(900) : 2600 + rand(2600));
+    };
+    tmo = setTimeout(hop, fast ? rand(400) : 600 + rand(1800));
+    return () => { alive = false; clearTimeout(tmo); el.remove(); };
+  }
+  if (!calm) [['Анонімна панда','var(--peer1)'],['Анонімний капібара','var(--peer2)'],['Анонімна видра','var(--peer3)']].forEach(([n, c]) => spawnAnimal(n, c, false));
+
+  // ── live cursors of real members (room presence) ──
+  (async () => {
+    const room = await useCap('room'); if (!room) return;
+    const live = new Map();
+    const myNick = () => (club.me && club.me.nick) || 'Гість';
+    let pos = null, lastSend = 0, pend = 0, lastNick = myNick();
+    const send = () => {
+      const now = performance.now();
+      if (now - lastSend < 120) { if (!pend) pend = setTimeout(() => { pend = 0; send(); }, 130); return; }
+      lastSend = now;
+      room.presence(Object.assign({nick: myNick()}, pos || {c: null})).catch(() => {});
+    };
+    document.addEventListener('pointermove', e => {
+      if (e.pointerType === 'touch') return;
+      const gx = (e.pageX - rnW())/120, gy = (e.pageY - 24)/34;
+      if (gx < 0 || gy < 0) return;
+      pos = {c: Math.floor(gx), r: Math.floor(gy), fx: +(gx % 1).toFixed(2), fy: +(gy % 1).toFixed(2)};
+      send();
+    }, {passive: true});
+    send();
+    setInterval(() => { if (myNick() !== lastNick) { lastNick = myNick(); send(); } }, 2000);
+    const render = peers => {
+      const seen = new Set();
+      peers.forEach(p => {
+        if (p.isMe || p.sameTab || p.kind !== 'viewer') return;
+        const pr = p.presence || {}; if (pr.c == null) return;
+        seen.add(p.peer);
+        const nick = String(pr.nick || 'Гість').slice(0, 24), col = colorFor(nick);
+        let v = live.get(p.peer);
+        if (!v) {
+          const a = document.createElement('div'); a.className = 'live';
+          a.innerHTML = '<svg viewBox="0 0 18 18"><path d="M2 2l5 14 2-6 6-2z" stroke="#fff" stroke-width="1.2"/></svg><span></span>';
+          const b = document.createElement('div'); b.className = 'live-cell';
+          document.body.append(b, a); v = {a, b}; live.set(p.peer, v);
+        }
+        v.a.style.setProperty('--lc', col); v.b.style.setProperty('--lc', col); v.a.querySelector('path').setAttribute('fill', col);
+        v.a.lastChild.textContent = nick;
+        const c = Math.max(0, Math.min(60, Math.floor(+pr.c) || 0)), r = Math.max(0, Math.min(3000, Math.floor(+pr.r) || 0));
+        const fx = Math.max(0, Math.min(1, +pr.fx || 0)), fy = Math.max(0, Math.min(1, +pr.fy || 0));
+        v.b.style.transform = `translate(${rnW() + c*120}px, ${24 + r*34}px)`;
+        v.a.style.transform = `translate(${rnW() + (c + fx)*120}px, ${24 + (r + fy)*34}px)`;
+      });
+      for (const [k, v] of live) if (!seen.has(k)) { v.a.remove(); v.b.remove(); live.delete(k); }
+      const others = peers.filter(p => !p.isMe && !p.sameTab && p.kind === 'viewer').length;
+      $('online').textContent = others ? `Зараз у клубі: ти і ще ${others}` : '';
+    };
+    room.onPeers(ch => render(ch.peers));
+    render(room.peers());
+  })();
+
+  // ── timed challenge: ChatGPT gave commas ──
+  (() => {
+    const F = ['=VLOOKUP(B2,A:C,3,FALSE)', '=SUMIFS(D:D,B:B,"Маркетинг",C:C,">"&DATE(2025,7,1))', '=IF(F2>40000,"Вище","Нижче")', '=COUNTIFS(B2:B100,"HR",C2:C100,"Київ")', '=INDEX(C:C,MATCH(B2,A:A,0))', '=DATEDIF(B2,TODAY(),"Y")', '=XLOOKUP(B2,C:C,B:B)', '=FILTER(A2:A100,B2:B100="Маркетинг")', '=SWITCH(B2,"M","Маркетинг","S","Продажі","Інше")', '=EDATE(B2,3)', '=WORKDAY(TODAY(),5)', '=IFS(F2>60000,"Висока",F2>40000,"Середня",TRUE,"Низька")', '=AVERAGEIF(B2:B100,"HR",F2:F100)', '=EOMONTH(TODAY(),-1)', '=SUMIF(B2:B100,"Маркетинг",F2:F100)'];
+    const q = $('chal-q'), inp = $('chal-in'), res = $('chal-res'), go = $('chal-go'), bar = $('chal-timer'), fill = bar.firstElementChild;
+    let round = 0, target = '', deadline = 0, total = 1, raf = 0, on = false, best = 0, order = [];
+    try { best = +localStorage.getItem('chal-best') || 0; } catch (e) {}
+    const showBest = () => { $('chal-best').textContent = `Рекорд: ${best}`; };
+    showBest();
+    const norm = s => s.replace(/\s+/g, '').replace(/[«»“”„]/g, '"').toUpperCase();
+    function next(){
+      if (!order.length) order = F.slice().sort(() => Math.random() - .5);
+      const f = order.pop(); target = f.replace(/,/g, ';');
+      q.textContent = '';
+      f.split(/(,)/).forEach(part => { const s = document.createElement('span'); if (part === ',') s.className = 'c'; s.textContent = part; q.appendChild(s); });
+      round++;
+      $('chal-round').textContent = `Раунд ${round}`;
+      $('chal-streak').textContent = round > 1 ? `×${round - 1}` : '';
+      total = Math.max(8000, 22000 - (round - 1)*1300); deadline = performance.now() + total;
+      inp.value = ''; inp.focus();
+    }
+    function tick(now){
+      if (!on) return;
+      const left = deadline - now;
+      fill.style.transform = `scaleX(${Math.max(0, left/total)})`;
+      bar.classList.toggle('hot', left < 4000);
+      if (left <= 0) return end('time');
+      raf = requestAnimationFrame(tick);
+    }
+    function end(why){
+      on = false; cancelAnimationFrame(raf); inp.disabled = true; go.textContent = 'Ще раз';
+      const score = Math.max(0, round - 1);
+      if (score > best) { best = score; try { localStorage.setItem('chal-best', best); } catch (e) {} showBest(); }
+      const title = score >= 8 ? 'Легенда крапки з комою' : score >= 4 ? 'Ти точно не ChatGPT' : score >= 1 ? 'Непогано для початку' : 'Ну що ж, буває';
+      res.textContent = why === 'comma'
+        ? `Кома в челенджі. Дискваліфікація! Результат: ${score}.`
+        : `#TIMEOUT — час вийшов. Результат: ${score} · ${title}. Правильно було: ${target}`;
+    }
+    go.addEventListener('click', () => {
+      on = true; round = 0; inp.disabled = false; go.textContent = 'Заново'; res.textContent = '';
+      next(); cancelAnimationFrame(raf); raf = requestAnimationFrame(tick);
+    });
+    inp.addEventListener('input', () => {
+      if (!on) return;
+      if (inp.value.includes(',')) { const r = inp.getBoundingClientRect(); end('comma'); inp.value = ''; boom(r.left + r.width/2, r.top + r.height/2); return; }
+      if (norm(inp.value) === norm(target)) { res.textContent = ['Чисто!', 'Ідеально ;', 'Так тримати!', 'Таблиці пишаються тобою'][rand(4)]; next(); }
+    });
+  })();
+
+  // ── certificate for stories (1080×1920) ──
+  let certBlob = null;
+  async function makeCert(){
+    try { await Promise.all(['900 120px Unbounded', '500 34px "JetBrains Mono"', '700 34px "JetBrains Mono"', '600 34px "Golos Text"'].map(f => document.fonts.load(f))); } catch (e) {}
+    const W = 1080, H = 1920, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const g = cv.getContext('2d');
+    const ink = '#16221b', mut = '#5d6b62', blue = '#2a5bd7', grid = '#dde3de';
+    const nick = (club.me && club.me.nick) || $('nick-in').value.trim() || 'Таємний фанат';
+    const row = club.me ? club.me.row : '?';
+    const date = new Date((club.me && club.me.at) || Date.now()).toLocaleDateString('uk-UA', {day: '2-digit', month: '2-digit', year: 'numeric'});
+    g.fillStyle = '#fcfdfc'; g.fillRect(0, 0, W, H);
+    g.strokeStyle = grid; g.lineWidth = 2; g.beginPath();
+    for (let x = 80; x <= W; x += 200) { g.moveTo(x, 0); g.lineTo(x, H); }
+    for (let y = 60; y <= H; y += 56) { g.moveTo(0, y); g.lineTo(W, y); }
+    g.stroke();
+    g.fillStyle = '#f0f3f1'; g.fillRect(0, 0, W, 60); g.fillRect(0, 0, 80, H);
+    g.fillStyle = mut; g.font = '500 24px "JetBrains Mono", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    'ABCDE'.split('').forEach((l, i) => g.fillText(l, 80 + i*200 + 100, 31));
+    for (let i = 0; i*56 + 60 < H; i++) g.fillText(i + 1, 40, 60 + i*56 + 29);
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    g.fillStyle = mut; g.font = '500 32px "JetBrains Mono", monospace'; g.fillText('СЕРТИФІКАТ УЧАСНИКА', 130, 290);
+    g.fillStyle = ink; g.font = '900 128px Unbounded, "Arial Black", sans-serif';
+    g.fillText('Клуб', 124, 440); g.fillText('крапки', 124, 580); g.fillText('з комою', 124, 720);
+    const sx = 124 + g.measureText('з комою').width + 22;
+    g.lineWidth = 8; g.strokeStyle = blue; g.strokeRect(sx, 600, 92, 150); g.fillStyle = blue; g.fillText(';', sx + 14, 720); g.fillRect(sx + 80, 738, 24, 24);
+    g.fillStyle = blue; g.fillRect(146, 866, 820, 430); g.fillStyle = '#fcfdfc'; g.fillRect(130, 850, 820, 430);
+    g.lineWidth = 6; g.strokeStyle = ink; g.strokeRect(130, 850, 820, 430);
+    g.fillStyle = mut; g.font = '500 32px "JetBrains Mono", monospace'; g.fillText(`B${row}   fx`, 170, 920);
+    let fs = 110; g.font = `900 ${fs}px Unbounded, "Arial Black", sans-serif`;
+    while (g.measureText(nick).width > 740 && fs > 40) { fs -= 4; g.font = `900 ${fs}px Unbounded, "Arial Black", sans-serif`; }
+    g.fillStyle = ink; g.fillText(nick, 170, 1060);
+    g.font = '600 38px "Golos Text", sans-serif'; g.fillText(`Рядок № ${row} · вступ ${date}`, 170, 1150);
+    g.fillStyle = mut; g.font = '500 30px "JetBrains Mono", monospace'; g.fillText('=ЯКЩО(кома; "вибух"; "фанат")', 170, 1230);
+    g.save(); g.translate(560, 1480); g.rotate(-.1);
+    g.fillStyle = '#b7e1cd'; g.fillRect(-330, -70, 660, 140); g.lineWidth = 5; g.strokeStyle = '#0e3b26'; g.strokeRect(-330, -70, 660, 140);
+    g.fillStyle = '#0e3b26'; g.textAlign = 'center'; g.font = '700 40px "JetBrains Mono", monospace'; g.fillText('ПЕРЕВІРЕНО:', 0, -10); g.fillText('ЖОДНОЇ КОМИ', 0, 42);
+    g.restore();
+    g.textAlign = 'left'; g.fillStyle = mut; g.font = '500 26px "JetBrains Mono", monospace';
+    g.fillText('Неофіційний фанклуб таблиць · свої вдома ;)', 130, 1820);
+    return cv;
+  }
+  $('cert-btn').addEventListener('click', async () => {
+    if (!club.me && !$('nick-in').value.trim()) { toast('Спершу впиши нік і вступи в клуб.'); $('nick-in').focus(); return; }
+    const cv = await makeCert();
+    $('cert-img').src = cv.toDataURL('image/png');
+    certBlob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    const dl = await useCap('downloads');
+    $('cert-save').hidden = !dl;
+    $('cert-hint').textContent = dl ? 'Формат 9:16 — одразу під сторіс і рілс.' : 'Збережи картинку: правий клік → «Зберегти зображення» або довге натискання на телефоні.';
+    $('cert').hidden = false; $('cert-close').focus();
+  });
+  $('cert-save').addEventListener('click', async () => {
+    const dl = await useCap('downloads'); if (!dl || !certBlob) return;
+    try {
+      const r = await dl.save({filename: `klub-krapky-z-komoyu-${club.me ? club.me.row : 'fan'}.png`, data: certBlob});
+      if (r && r.status === 'saved') toast('Сертифікат збережено. Чекаємо в сторіс!', true);
+    } catch (e) {
+      if (e && e.code === 'unavailable') { $('cert-save').hidden = true; $('cert-hint').textContent = 'Збережи картинку: правий клік → «Зберегти зображення» або довге натискання на телефоні.'; }
+    }
+  });
+  const closeCert = () => { $('cert').hidden = true; $('cert-btn').focus(); };
+  $('cert-close').addEventListener('click', closeCert);
+  $('cert').addEventListener('click', e => { if (e.target.id === 'cert') closeCert(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('cert').hidden) closeCert(); });
+
+  // ── chaos mode ──
+  let chaosStops = [], junkT = 0;
+  $('go-chaos').addEventListener('click', () => {
+    const btn = $('go-chaos'), turnOn = !document.body.classList.contains('chaos');
+    btn.classList.toggle('on', turnOn); btn.textContent = turnOn ? '🧯 Вимкнути хаос' : '🔥 Режим хаосу';
+    document.body.classList.toggle('chaos', turnOn);
+    if (turnOn) {
+      const names = ['Анонімний бобер','Анонімна лама','Анонімний їжак','Анонімна сова','Анонімний єнот','Анонімна жаба','Анонімний пінгвін','Анонімна лисиця','Анонімний ховрах','Анонімна качка'];
+      for (let i = 0; i < 24; i++) chaosStops.push(spawnAnimal(names[i % names.length], PAL[i % PAL.length], true));
+      const junkWords = ['#REF!','#N/A','#DIV/0!','#VALUE!','#ERROR!','#NAME?','=ВПР(','???','ой','хто це'];
+      junkT = setInterval(() => {
+        const j = document.createElement('div'); j.className = 'junk'; j.textContent = junkWords[rand(junkWords.length)];
+        const c = rand(Math.max(2, Math.floor((innerWidth - rnW())/120))), r = Math.floor((scrollY + rand(innerHeight))/34);
+        j.style.transform = `translate(${rnW() + c*120}px, ${24 + r*34}px)`; document.body.appendChild(j);
+        const all = document.querySelectorAll('.junk'); if (all.length > 140) all[0].remove();
+      }, 110);
+      toast('Режим хаосу: 24 анонімних співавтори редагують одночасно');
+    } else {
+      chaosStops.forEach(s => s()); chaosStops = []; clearInterval(junkT);
+      document.querySelectorAll('.junk').forEach(j => j.remove());
+      toast('Хаос прибрано. Ctrl+Z врятував клуб.', true);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
