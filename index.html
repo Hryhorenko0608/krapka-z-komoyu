@@ -1,11 +1,5 @@
-<!doctype html>
-<html lang="uk">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Неофіційний фанклуб Google Таблиць. Свої вдома ;)">
-<style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
 <title>Клуб крапки з комою</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
@@ -290,9 +284,6 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
 .lh-btns button{padding:8px 14px;font:600 13px var(--body);border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;border-radius:2px}
 .lh-btns button:hover{background:var(--ink);color:var(--paper)}
 </style>
-</head>
-<body>
-
 
 <div id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
   <form class="lock" id="gate-form" autocomplete="off">
@@ -572,7 +563,7 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
   };
 
   // ── Google Sheets backend (used on the public site; empty here) ──
-  const SHEET_API = 'https://script.google.com/macros/s/AKfycbw6st4W2Q-LN8QErKmbo3C_yi4SZmb1pZxoVt5_sI8HmzrcTXYbCtK7Il6tMEOY_Z19/exec';
+  const SHEET_API = '';
   function sid(){
     let s = null; try { s = localStorage.getItem('club-sid'); } catch (e) {}
     if (!s) { const a = new Uint8Array(12); crypto.getRandomValues(a); s = Array.from(a, b => b.toString(16).padStart(2, '0')).join(''); try { localStorage.setItem('club-sid', s); } catch (e) {} }
@@ -689,7 +680,7 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
     {title:'MAXIFS / MINIFS — максимум / мінімум за умовою', desc:'MAXIFS й MINIFS шукають мах/мін значення які відповідають кільком умовам одразу.', code:'=MAXIFS(C:C; A:A; "Категорія"; B:B; ">100")', tags:['функція','умова']},
     {title:'SUMPRODUCT — гнучкий рахунок', desc:'SUMPRODUCT множить й сумує. Класно для складних умов коли SUMIF не справляється.', code:'=SUMPRODUCT((A:A="X")*(B:B>50))', tags:['функція','матема']},
     {title:'RAND / RANDBETWEEN — випадкові числа', desc:'RAND генерує випадкове число від 0 до 1, RANDBETWEEN — в діапазоні. Класно для розподілу.', code:'=RANDBETWEEN(1; 100)', tags:['функція','випадок']},
-    {title:'CONCATENATE / & — об'єднати текст', desc:'Объедінай текст з кількох клітинок. & швидше ніж CONCATENATE, робить те саме.', code:'=A1&" "&B1 або =CONCATENATE(A1; " "; B1)', tags:['функція','текст']},
+    {title:"CONCATENATE / & — об'єднати текст", desc:'Объедінай текст з кількох клітинок. & швидше ніж CONCATENATE, робить те саме.', code:'=A1&" "&B1 або =CONCATENATE(A1; " "; B1)', tags:['функція','текст']},
     {title:'TIME — робота з часом', desc:'TIME дозволяє працювати з часом окремо від дати. Добре для рахування тривалості.', code:'=TIME(14; 30; 0) → 14:30:00', tags:['функція','дата']},
     {title:'LEN / TRIM — довжина й очистка', desc:'LEN рахує символи, TRIM прибирає пробіли. Перевіри що кількість символів вірна перед вставкою.', code:'=TRIM("  тест  ") → "тест"', tags:['функція','текст']},
   ];
@@ -821,7 +812,7 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
     ['впр', 'ВПР — класика. Але ти чува про XLOOKUP? 👀', true],
     ['vlookup', 'ВПР — класика. Але ти чува про XLOOKUP? 👀', true],
     ['ctrlz', 'Скасовувати тут нічого. Але в житті потренуйся сама.', true],
-    ['обєднати', 'НІ. Об’єднані клітинки заборонені статутом клубу (пункт R2).', false]
+    [‘обєднати’, "НІ. Об’єднані клітинки заборонені статутом клубу (пункт R2).", false]
   ];
   document.addEventListener('keydown', e => {
     if (!gate.classList.contains('open')) return;
@@ -1371,6 +1362,3 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
   });
 })();
 </script>
-
-</body>
-</html>
