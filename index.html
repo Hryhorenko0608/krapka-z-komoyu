@@ -230,6 +230,27 @@ body.quake .wrap{animation:shake .4s}
 .lh-controls{display:flex;gap:10px;margin-top:18px;justify-content:space-between;align-items:center;flex-wrap:wrap}
 .lh-btns{display:flex;gap:8px;flex-wrap:wrap}
 .lh-btns .btn{padding:8px 14px;font-size:14px}
+/* Спитай клуб */
+.ask-box{border:2px solid var(--ink);background:var(--paper)}
+.ask-log{max-height:440px;min-height:170px;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:88%;padding:10px 14px;font-size:15px;line-height:1.5;min-width:0}
+.msg p{margin:0 0 6px}.msg p:last-child{margin:0}
+.msg.me{align-self:flex-end;background:var(--select);color:var(--paper);white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.bot{align-self:flex-start;background:var(--head);border:1px solid var(--grid)}
+.msg.bot::before{content:"\041a\043b\0443\0431 ;";display:block;font:600 11px var(--mono);color:var(--select);margin-bottom:4px;letter-spacing:.04em}
+.msg.typing p{color:var(--muted);font-style:italic}
+.ask-code{display:block;width:100%;text-align:left;margin:6px 0;padding:8px 10px;font:500 14px var(--mono);background:var(--paper);color:var(--ink);border:1px dashed var(--select);cursor:copy;overflow-wrap:anywhere}
+.ask-code:hover,.ask-code:focus-visible{border-style:solid;outline:0}
+.ask-chips{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 12px}
+.ask-chip{font:500 13px var(--body);padding:6px 10px;border:1px solid var(--grid);background:var(--head);color:var(--ink);cursor:pointer}
+.ask-chip:hover{border-color:var(--select)}
+.ask-form{display:flex;border-top:1px solid var(--grid)}
+.ask-form textarea{flex:1;min-width:0;border:0;resize:none;padding:12px 14px;font:15px/1.4 var(--body);background:transparent;color:var(--ink);height:60px}
+.ask-form textarea:focus{outline:2px solid var(--select);outline-offset:-2px}
+.ask-form .btn{border-radius:0}
+.ask-form .btn:disabled{opacity:.6;cursor:wait}
+#ask-note{margin:8px 0 0;font:500 12px var(--mono);color:var(--muted)}
+#ask-note:empty{display:none}
 /* cracks + damage report */
 #cracks{position:fixed;inset:0;z-index:198;pointer-events:none;width:100%;height:100%}
 #cracks path{fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round;animation:crack .25s ease-out both}
@@ -404,6 +425,28 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
         <div class="chal-res" id="chal-res" aria-live="polite"></div>
         <div class="chal-row"><button class="btn" id="chal-go">Старт</button><span class="streak" id="chal-streak"></span></div>
       </div>
+    </section>
+
+    <section id="ask">
+      <h2>Спитай клуб</h2>
+      <p class="sub">Опиши, що в тебе в таблиці і що треба порахувати, а клуб підбере формулу. Реальні дані не вставляй, опиши словами: «у стовпці A імена, у B суми».</p>
+      <div class="ask-box">
+        <div class="ask-log" id="ask-log" aria-live="polite">
+          <div class="msg bot"><p>Привіт! Я підбираю формули Google Таблиць. Звісно, з крапкою з комою. Що треба зробити?</p></div>
+        </div>
+        <div class="ask-chips">
+          <button class="ask-chip" type="button" data-q="У мене на аркуші «Ціни» в стовпці A назви товарів, у B ціни. Як підтягнути ціну на інший аркуш за назвою товару?">Підтягнути з іншого аркуша</button>
+          <button class="ask-chip" type="button" data-q="У стовпці A відділи, у B суми витрат. Як порахувати суму тільки по відділу «Маркетинг»?">Сума за умовою</button>
+          <button class="ask-chip" type="button" data-q="Як підсвітити або знайти дублікати в стовпці A?">Знайти дублікати</button>
+          <button class="ask-chip" type="button" data-q="У стовпці B дата прийому на роботу. Як порахувати стаж у роках, а якщо менше року — написати «до 1 року»?">Стаж із дати</button>
+          <button class="ask-chip" type="button" data-q="У стовпці A записано ПІБ одним рядком. Як розбити на прізвище, ім’я та по батькові в окремі стовпці?">Розбити ПІБ</button>
+        </div>
+        <form class="ask-form" id="ask-form" autocomplete="off">
+          <textarea id="ask-in" rows="2" maxlength="600" placeholder="Наприклад: у стовпці A товари, у B ціни. Як знайти найдорожчий товар?" aria-label="Твоє питання про формулу"></textarea>
+          <button class="btn" id="ask-send" type="submit">Спитати</button>
+        </form>
+      </div>
+      <p id="ask-note"></p>
     </section>
 
     <section id="rules">
@@ -831,7 +874,7 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
     });
     inp.addEventListener('blur', () => commit(true));
   }
-  const busy = '#lifehack-modal,#tetris,#cert,.dmg,.chal,.reg,.cta,.errs,.rules,footer,button,input,select,textarea,a,label,.err,.mini,.rule,.join,.fbar,h1,h2,p,code,small,.tag,.hint-line,.lock,#gate';
+  const busy = '#ask,#lifehack-modal,#tetris,#cert,.dmg,.chal,.reg,.cta,.errs,.rules,footer,button,input,select,textarea,a,label,.err,.mini,.rule,.join,.fbar,h1,h2,p,code,small,.tag,.hint-line,.lock,#gate';
   document.addEventListener('click', e => {
     if (!gate.classList.contains('open')) return;
     if (e.target.closest('.cell-editor')) return;
@@ -1021,6 +1064,90 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
     const act = {left: () => move(-1), right: () => move(1), rot: turn, down: () => down(true), drop};
     document.querySelectorAll('.tx-pad button').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); if (!over && !paused && !clearing) act[b.dataset.a](); }));
     addEventListener('resize', () => { if (!ov.hidden) size(); });
+  })();
+
+  // ── Спитай клуб: чат-помічник з формулами ──
+  (() => {
+    const log = $('ask-log'), form = $('ask-form'), inp = $('ask-in'), send = $('ask-send'), note = $('ask-note');
+    const SYS = [
+  'Ти — помічник фанклубу Google Таблиць «Клуб крапки з комою». Допомагаєш підібрати формулу Google Таблиць під задачу користувача.',
+  'Правила:',
+  '- Відповідай українською, коротко і простою мовою, без програмістського жаргону.',
+  '- У користувачів українська локаль: аргументи формули розділяй ТІЛЬКИ крапкою з комою (;). Десятковий роздільник — кома. Назви функцій пиши англійською (VLOOKUP, XLOOKUP, SUMIFS, FILTER тощо).',
+  '- Кожну формулу пиши окремим рядком, що починається зі знака =. Без markdown, без зірочок, без зворотних лапок.',
+  '- Структура відповіді: одне речення, що робить формула → формула → 1–3 короткі рядки, куди що підставити (які стовпці, діапазони, аркуші). Якщо є кращий сучасний варіант, дай його другою формулою.',
+  '- Якщо опису замало, дай формулу з припущенням і прямо назви це припущення, або постав одне коротке уточнювальне питання.',
+  '- Можеш підказувати й прості Apps Script, умовне форматування, зведені таблиці — тими ж простими словами.',
+  '- Якщо питання не про таблиці, весело поверни розмову до таблиць.',
+  '- Ніколи не проси реальних персональних даних, а якщо їх вставили — не повторюй.',
+  '- Кома як роздільник аргументів у цьому клубі під забороною ;)'
+].join('\n');
+    const history = [];
+    let busyAsk = false;
+    const errText = {
+      limit_user: 'На сьогодні твої питання закінчились. Приходь завтра, формули нікуди не дінуться ;)',
+      limit_all: 'Сьогодні клуб відповів уже на всі питання, які міг. Спробуй завтра.',
+      busy: 'Зараз забагато питань одночасно. Спробуй за хвилинку.',
+      not_configured: 'Чат ще налаштовується. Загляни трохи пізніше.',
+      bad_question: 'Порожнє питання не рахується. Опиши, що в тебе в таблиці.',
+      unavailable: 'Тут чат не працює. Відкрий публічну версію сайту, там клуб відповідає всім.'
+    };
+    function copyText(t){
+      try { navigator.clipboard.writeText(t).then(() => toast('Формулу скопійовано 📋', true), () => toast('Не вийшло скопіювати. Виділи формулу й натисни Ctrl+C.')); }
+      catch (e) { toast('Не вийшло скопіювати. Виділи формулу й натисни Ctrl+C.'); }
+    }
+    function addMsg(role, text){
+      const m = document.createElement('div'); m.className = 'msg ' + (role === 'user' ? 'me' : 'bot');
+      if (role === 'user') m.textContent = text;
+      else {
+        let fence = false;
+        String(text).replace(/\r/g, '').split('\n').forEach(line => {
+          const t = line.trim();
+          if (t.startsWith('```')) { fence = !fence; return; }
+          if (!t) return;
+          const clean = t.replace(/^`+|`+$/g, '');
+          if (fence || clean.startsWith('=')) {
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'ask-code'; b.title = 'Клікни, щоб скопіювати';
+            b.textContent = clean; b.addEventListener('click', () => copyText(b.textContent)); m.appendChild(b);
+          } else {
+            const pEl = document.createElement('p'); pEl.textContent = clean.replace(/\*\*/g, '').replace(/`([^`]+)`/g, '$1'); m.appendChild(pEl);
+          }
+        });
+      }
+      log.appendChild(m); log.scrollTop = log.scrollHeight; return m;
+    }
+    async function getAnswer(q){
+      if (SHEET_API) {
+        const d = await sheetPost({action: 'ask', q, history: history.slice(-6)});
+        return {answer: d.answer, left: d.left};
+      }
+      const sample = await useCap('sample');
+      if (!sample) throw new Error('unavailable');
+      const past = history.slice(-6).map(h => (h.role === 'model' ? 'Клуб: ' : 'Користувач: ') + h.text).join('\n\n');
+      const r = await sample(SYS + (past ? '\n\nПопередня розмова:\n' + past : '') + '\n\nНове питання користувача:\n' + q, {modelTier: 'quick'});
+      return {answer: r.text, left: null};
+    }
+    async function ask(q){
+      q = String(q || '').trim().slice(0, 600);
+      if (!q || busyAsk) return;
+      busyAsk = true; send.disabled = true; inp.value = '';
+      addMsg('user', q);
+      const wait = addMsg('bot', 'Підбираю формулу…'); wait.classList.add('typing');
+      try {
+        const {answer, left} = await getAnswer(q);
+        wait.remove(); addMsg('bot', answer);
+        history.push({role: 'user', text: q}, {role: 'model', text: answer});
+        if (left != null) note.textContent = `Залишилось питань на сьогодні: ${left}`;
+      } catch (e) {
+        wait.remove();
+        const code = e && (e.code || e.message);
+        addMsg('bot', errText[code] || 'Щось пішло не так. Спробуй ще раз трохи згодом.');
+      }
+      busyAsk = false; send.disabled = false; inp.focus();
+    }
+    form.addEventListener('submit', e => { e.preventDefault(); ask(inp.value); });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(inp.value); } });
+    document.querySelectorAll('.ask-chip').forEach(c => c.addEventListener('click', () => ask(c.dataset.q)));
   })();
 
   // ── лайфхак дня ──
