@@ -272,6 +272,7 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
 </head>
 <body>
 
+
 <div id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
   <form class="lock" id="gate-form" autocomplete="off">
     <span class="badge">🔒 Захищений діапазон · A1:Z1000</span>
@@ -710,7 +711,7 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
     ['впр', 'ВПР — класика. Але ти чула про XLOOKUP? 👀', true],
     ['vlookup', 'ВПР — класика. Але ти чула про XLOOKUP? 👀', true],
     ['ctrlz', 'Скасовувати тут нічого. Але в житті потренуйся сама.', true],
-    ['обєднати', 'НІ. Об\'єднані клітинки заборонені статутом клубу (пункт R2).', false]
+    ['обєднати', 'НІ. Об’єднані клітинки заборонені статутом клубу (пункт R2).', false]
   ];
   document.addEventListener('keydown', e => {
     if (!gate.classList.contains('open')) return;
@@ -1130,7 +1131,7 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
     try { best = +localStorage.getItem('chal-best') || 0; } catch (e) {}
     const showBest = () => { $('chal-best').textContent = `Рекорд: ${best}`; };
     showBest();
-    const norm = s => s.replace(/\s+/g, '').replace(/[«»""„]/g, '"').toUpperCase();
+    const norm = s => s.replace(/\s+/g, '').replace(/[«»“”„]/g, '"').toUpperCase();
     function next(){
       if (!order.length) order = F.slice().sort(() => Math.random() - .5);
       const f = order.pop(); target = f.replace(/,/g, ';');
@@ -1218,4 +1219,48 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
     certBlob = await new Promise(r => cv.toBlob(r, 'image/png'));
     const dl = await useCap('downloads');
     $('cert-save').hidden = !dl;
-    $('cert-hint').textContent = dl ? 'Формат 9:16 — одразу під сторіс і рілс.' : 'Збережи картинку: правий клік → «Зберегти зображення» або довге натиск
+    $('cert-hint').textContent = dl ? 'Формат 9:16 — одразу під сторіс і рілс.' : 'Збережи картинку: правий клік → «Зберегти зображення» або довге натискання на телефоні.';
+    $('cert').hidden = false; $('cert-close').focus();
+  });
+  $('cert-save').addEventListener('click', async () => {
+    const dl = await useCap('downloads'); if (!dl || !certBlob) return;
+    try {
+      const r = await dl.save({filename: `klub-krapky-z-komoyu-${club.me ? club.me.row : 'fan'}.png`, data: certBlob});
+      if (r && r.status === 'saved') toast('Сертифікат збережено. Чекаємо в сторіс!', true);
+    } catch (e) {
+      if (e && e.code === 'unavailable') { $('cert-save').hidden = true; $('cert-hint').textContent = 'Збережи картинку: правий клік → «Зберегти зображення» або довге натискання на телефоні.'; }
+    }
+  });
+  const closeCert = () => { $('cert').hidden = true; $('cert-btn').focus(); };
+  $('cert-close').addEventListener('click', closeCert);
+  $('cert').addEventListener('click', e => { if (e.target.id === 'cert') closeCert(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('cert').hidden) closeCert(); });
+
+  // ── chaos mode ──
+  let chaosStops = [], junkT = 0;
+  $('go-chaos').addEventListener('click', () => {
+    const btn = $('go-chaos'), turnOn = !document.body.classList.contains('chaos');
+    btn.classList.toggle('on', turnOn); btn.textContent = turnOn ? '🧯 Вимкнути хаос' : '🔥 Режим хаосу';
+    document.body.classList.toggle('chaos', turnOn);
+    if (turnOn) {
+      const names = ['Анонімний бобер','Анонімна лама','Анонімний їжак','Анонімна сова','Анонімний єнот','Анонімна жаба','Анонімний пінгвін','Анонімна лисиця','Анонімний ховрах','Анонімна качка'];
+      for (let i = 0; i < 24; i++) chaosStops.push(spawnAnimal(names[i % names.length], PAL[i % PAL.length], true));
+      const junkWords = ['#REF!','#N/A','#DIV/0!','#VALUE!','#ERROR!','#NAME?','=ВПР(','???','ой','хто це'];
+      junkT = setInterval(() => {
+        const j = document.createElement('div'); j.className = 'junk'; j.textContent = junkWords[rand(junkWords.length)];
+        const c = rand(Math.max(2, Math.floor((innerWidth - rnW())/120))), r = Math.floor((scrollY + rand(innerHeight))/34);
+        j.style.transform = `translate(${rnW() + c*120}px, ${24 + r*34}px)`; document.body.appendChild(j);
+        const all = document.querySelectorAll('.junk'); if (all.length > 140) all[0].remove();
+      }, 110);
+      toast('Режим хаосу: 24 анонімних співавтори редагують одночасно');
+    } else {
+      chaosStops.forEach(s => s()); chaosStops = []; clearInterval(junkT);
+      document.querySelectorAll('.junk').forEach(j => j.remove());
+      toast('Хаос прибрано. Ctrl+Z врятував клуб.', true);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
