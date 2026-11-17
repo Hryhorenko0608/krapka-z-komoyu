@@ -215,6 +215,21 @@ body.quake .wrap{animation:shake .4s}
 .tx-pad button{flex:1;max-width:64px;height:50px;font:700 18px var(--mono);border:1.5px solid var(--ink);background:var(--head);color:var(--ink);cursor:pointer;touch-action:manipulation}
 @media (max-width:640px),(pointer:coarse){.tx-pad{display:flex}}
 @media (max-width:640px){.tx-body{flex-direction:column;align-items:center;gap:10px}.tx-side{flex-direction:row;flex-wrap:wrap;align-items:flex-start;min-width:0;width:100%}.tx-tab{width:auto;flex:1}.tx-keys{display:none}.tx-top span{display:none}}
+/* Лайфхак дня */
+#lifehack-modal{position:fixed;inset:0;z-index:97;background:rgba(10,16,12,.55);display:grid;place-items:center;overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px))}
+#lifehack-modal[hidden]{display:none!important}
+.lh-card{background:var(--paper);color:var(--ink);border:2px solid var(--ink);box-shadow:8px 8px 0 var(--select);max-width:540px;width:100%;padding:24px}
+.lh-num{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--select);margin-bottom:8px}
+.lh-title{font:700 22px var(--display);letter-spacing:-.02em;margin:0 0 8px;text-wrap:balance}
+.lh-desc{font:15px/1.5 var(--body);color:var(--muted);margin:0}
+.lh-code{display:block;width:100%;text-align:left;background:var(--head);border:1px dashed var(--grid);padding:12px;font:500 14px var(--mono);color:var(--ink);overflow-wrap:anywhere;margin:14px 0 4px;cursor:copy}
+.lh-code:hover,.lh-code:focus-visible{border-color:var(--select);outline:0}
+.lh-copy{font:11px var(--mono);color:var(--muted);min-height:1.4em}
+.lh-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.lh-tag{font:11px var(--mono);background:var(--cf);color:var(--cf-ink);padding:3px 8px}
+.lh-controls{display:flex;gap:10px;margin-top:18px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.lh-btns{display:flex;gap:8px;flex-wrap:wrap}
+.lh-btns .btn{padding:8px 14px;font-size:14px}
 /* cracks + damage report */
 #cracks{position:fixed;inset:0;z-index:198;pointer-events:none;width:100%;height:100%}
 #cracks path{fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round;animation:crack .25s ease-out both}
@@ -283,6 +298,20 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
   </form>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
+<div id="lifehack-modal" hidden role="dialog" aria-modal="true" aria-labelledby="lh-title">
+  <div class="lh-card">
+    <div class="lh-num" id="lh-num"></div>
+    <h2 class="lh-title" id="lh-title"></h2>
+    <p class="lh-desc" id="lh-desc"></p>
+    <button class="lh-code" id="lh-code" type="button" title="Клікни, щоб скопіювати"></button>
+    <div class="lh-copy" id="lh-copy" aria-live="polite">Клікни на формулу, щоб скопіювати</div>
+    <div class="lh-tags" id="lh-tags"></div>
+    <div class="lh-controls">
+      <button class="btn ghost" id="lh-close" type="button">Закрити</button>
+      <div class="lh-btns"><button class="btn ghost" id="lh-prev" type="button">← Назад</button><button class="btn" id="lh-next" type="button">Далі →</button></div>
+    </div>
+  </div>
+</div>
 <div id="cert" hidden role="dialog" aria-modal="true" aria-label="Сертифікат учасника">
   <div class="cert-win">
     <img id="cert-img" alt="Сертифікат учасника клубу">
@@ -338,6 +367,7 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
         <button class="btn ghost" id="go-quiz">Який я фанат?</button>
         <button class="btn ghost" id="go-game">▶ Грати в Таблікс</button>
         <button class="btn ghost" id="go-chaos">🔥 Режим хаосу</button>
+        <button class="btn ghost" id="lifehack-btn">💡 Лайфхак дня</button>
       </div>
       <div class="hint-line">Клікни в будь-яку порожню клітинку і пиши. Формули теж рахуються: =2+2 або =СУМ(5; 10)</div>
       <div class="hint-line" id="online"></div>
@@ -801,7 +831,7 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
     });
     inp.addEventListener('blur', () => commit(true));
   }
-  const busy = '#tetris,#cert,.dmg,.chal,.reg,.cta,.errs,.rules,footer,button,input,select,textarea,a,label,.err,.mini,.rule,.join,.fbar,h1,h2,p,code,small,.tag,.hint-line,.lock,#gate';
+  const busy = '#lifehack-modal,#tetris,#cert,.dmg,.chal,.reg,.cta,.errs,.rules,footer,button,input,select,textarea,a,label,.err,.mini,.rule,.join,.fbar,h1,h2,p,code,small,.tag,.hint-line,.lock,#gate';
   document.addEventListener('click', e => {
     if (!gate.classList.contains('open')) return;
     if (e.target.closest('.cell-editor')) return;
@@ -992,6 +1022,264 @@ body.flashbang::after{content:"";position:fixed;inset:0;background:#fff;z-index:
     document.querySelectorAll('.tx-pad button').forEach(b => b.addEventListener('pointerdown', e => { e.preventDefault(); if (!over && !paused && !clearing) act[b.dataset.a](); }));
     addEventListener('resize', () => { if (!ov.hidden) size(); });
   })();
+
+  // ── лайфхак дня ──
+  const lifehacks = [
+{
+"title": "XLOOKUP замість ВПР",
+"desc": "XLOOKUP шукає в будь-який бік і не потребує номера стовпця. Вставили новий стовпець — формула не зламалась.",
+"code": "=XLOOKUP(\"шукаємо\"; A:A; B:B)",
+"tags": [
+"пошук"
+]
+},
+{
+"title": "INDEX + MATCH",
+"desc": "Найгнучкіший пошук: шукає ліворуч від ключа і працює там, де ВПР здається.",
+"code": "=INDEX(B:B; MATCH(\"шукаємо\"; A:A; 0))",
+"tags": [
+"пошук"
+]
+},
+{
+"title": "ВПР — завжди з FALSE",
+"desc": "Без FALSE у кінці ВПР шукає «приблизно» і спокійно повертає не той рядок.",
+"code": "=VLOOKUP(\"шукаємо\"; A:B; 2; FALSE)",
+"tags": [
+"пошук"
+]
+},
+{
+"title": "ARRAYFORMULA на весь стовпець",
+"desc": "Одна формула в першій клітинці рахує весь стовпець, нічого не треба протягувати.",
+"code": "=ARRAYFORMULA(IF(A2:A=\"\"; \"\"; A2:A&\" готово\"))",
+"tags": [
+"автоматизація"
+]
+},
+{
+"title": "QUERY — таблиця, що відповідає на питання",
+"desc": "Фільтр, сортування й групування в одній формулі, як запит до бази даних.",
+"code": "=QUERY(A:D; \"select A, sum(D) where A is not null group by A\")",
+"tags": [
+"QUERY"
+]
+},
+{
+"title": "GROUP BY у QUERY",
+"desc": "Згрупуй дані й порахуй кількість, суму чи середнє по кожній групі.",
+"code": "=QUERY(A:C; \"select A, count(B) group by A\")",
+"tags": [
+"QUERY"
+]
+},
+{
+"title": "FILTER без кнопок фільтра",
+"desc": "Виводить відфільтровані рядки в окреме місце й оновлюється сам.",
+"code": "=FILTER(A:B; B:B>100)",
+"tags": [
+"фільтр"
+]
+},
+{
+"title": "UNIQUE — геть дублікати",
+"desc": "Повертає список без повторів. Не треба видаляти дублікати вручну.",
+"code": "=SORT(UNIQUE(A2:A))",
+"tags": [
+"дані"
+]
+},
+{
+"title": "SPLIT — розбити текст",
+"desc": "Розкладає текст по клітинках за роздільником. Ідеально для «Прізвище Ім’я».",
+"code": "=SPLIT(A2; \" \")",
+"tags": [
+"текст"
+]
+},
+{
+"title": "REGEXEXTRACT — витягти шматок",
+"desc": "Дістає з тексту те, що підходить під шаблон: номер, код, суму.",
+"code": "=REGEXEXTRACT(A2; \"[0-9]+\")",
+"tags": [
+"текст"
+]
+},
+{
+"title": "TRIM — невидимі пробіли",
+"desc": "Прибирає зайві пробіли. Саме через них ВПР часто «не бачить» значення.",
+"code": "=TRIM(A2)",
+"tags": [
+"текст"
+]
+},
+{
+"title": "PROPER — нормальні імена",
+"desc": "Робить першу літеру кожного слова великою: «тЕтяна» → «Тетяна».",
+"code": "=PROPER(A2)",
+"tags": [
+"текст"
+]
+},
+{
+"title": "& замість CONCATENATE",
+"desc": "Склеює текст з кількох клітинок. Коротше й читається легше.",
+"code": "=A2&\" \"&B2",
+"tags": [
+"текст"
+]
+},
+{
+"title": "SUBSTITUTE — заміна в тексті",
+"desc": "Замінює один фрагмент тексту на інший усередині клітинки.",
+"code": "=SUBSTITUTE(A2; \"кома\"; \"крапка з комою\")",
+"tags": [
+"текст"
+]
+},
+{
+"title": "IMPORTRANGE — дані з іншого файлу",
+"desc": "Підтягує діапазон з іншої таблиці. Перший раз натисни «Дозволити доступ».",
+"code": "=IMPORTRANGE(\"ID_таблиці\"; \"Аркуш1!A:B\")",
+"tags": [
+"зв’язки"
+]
+},
+{
+"title": "FLATTEN — усе в один стовпець",
+"desc": "Збирає кілька стовпців в один список. Зручно перед UNIQUE.",
+"code": "=UNIQUE(FLATTEN(A2:C))",
+"tags": [
+"масиви"
+]
+},
+{
+"title": "TRANSPOSE — повернути таблицю",
+"desc": "Рядки стають стовпцями, а стовпці рядками.",
+"code": "=TRANSPOSE(A1:C10)",
+"tags": [
+"масиви"
+]
+},
+{
+"title": "IFERROR — без страшних #N/A",
+"desc": "Ховає помилку й показує зрозумілий текст замість неї.",
+"code": "=IFERROR(VLOOKUP(A2; D:E; 2; FALSE); \"Не знайдено\")",
+"tags": [
+"помилки"
+]
+},
+{
+"title": "COUNTIF — скільки разів",
+"desc": "Рахує, скільки клітинок підходить під умову.",
+"code": "=COUNTIF(C:C; \"Готово\")",
+"tags": [
+"підрахунок"
+]
+},
+{
+"title": "SUMIFS — сума за кількома умовами",
+"desc": "Сумує лише те, що підходить під усі умови одразу.",
+"code": "=SUMIFS(D:D; B:B; \"Маркетинг\"; C:C; \"Київ\")",
+"tags": [
+"підрахунок"
+]
+},
+{
+"title": "MAXIFS / MINIFS",
+"desc": "Найбільше чи найменше значення серед рядків, що відповідають умовам.",
+"code": "=MAXIFS(C:C; A:A; \"HR\"; B:B; \">100\")",
+"tags": [
+"підрахунок"
+]
+},
+{
+"title": "SUMPRODUCT — коли SUMIF замало",
+"desc": "Рахує за складними умовами, які не вміщаються в SUMIF.",
+"code": "=SUMPRODUCT((A2:A100=\"X\")*(B2:B100>50))",
+"tags": [
+"підрахунок"
+]
+},
+{
+"title": "DATEDIF — стаж і вік",
+"desc": "Повні роки, місяці чи дні між двома датами.",
+"code": "=DATEDIF(B2; TODAY(); \"Y\")",
+"tags": [
+"дати"
+]
+},
+{
+"title": "WORKDAY — лише робочі дні",
+"desc": "Дата через N робочих днів, вихідні пропускає сама.",
+"code": "=WORKDAY(TODAY(); 5)",
+"tags": [
+"дати"
+]
+},
+{
+"title": "RANDBETWEEN — жеребкування",
+"desc": "Випадкове число в діапазоні. Для розіграшів і тестових даних.",
+"code": "=RANDBETWEEN(1; 100)",
+"tags": [
+"випадковість"
+]
+},
+{
+"title": "Закріпи шапку",
+"desc": "Заголовки видно навіть на рядку 4 000.",
+"code": "Вигляд → Закріпити → 1 рядок",
+"tags": [
+"інтерфейс"
+]
+},
+{
+"title": "Вставка лише значень",
+"desc": "Вставляє дані без чужих шрифтів, кольорів і формул. Рятує при копіюванні з сайтів.",
+"code": "Ctrl+Shift+V",
+"tags": [
+"трюк"
+]
+},
+{
+"title": "Умовне форматування",
+"desc": "Таблиця сама підсвічує важливе: прострочене, дублікати, готове.",
+"code": "Формат → Умовне форматування → =$D2=\"Готово\"",
+"tags": [
+"інтерфейс"
+]
+}
+];
+  let lhIndex = 0;
+  function showLifehack(i){
+    lhIndex = (i + lifehacks.length) % lifehacks.length;
+    const lh = lifehacks[lhIndex];
+    $('lh-num').textContent = `Лайфхак ${lhIndex + 1} з ${lifehacks.length}`;
+    $('lh-title').textContent = lh.title;
+    $('lh-desc').textContent = lh.desc;
+    $('lh-code').textContent = lh.code;
+    $('lh-copy').textContent = 'Клікни на формулу, щоб скопіювати';
+    const tags = $('lh-tags'); tags.textContent = '';
+    lh.tags.forEach(t => { const s = document.createElement('span'); s.className = 'lh-tag'; s.textContent = t; tags.appendChild(s); });
+  }
+  const closeLh = () => { $('lifehack-modal').hidden = true; $('lifehack-btn').focus(); };
+  $('lifehack-btn').addEventListener('click', () => { showLifehack(rand(lifehacks.length)); $('lifehack-modal').hidden = false; $('lh-next').focus(); });
+  $('lh-next').addEventListener('click', () => showLifehack(lhIndex + 1));
+  $('lh-prev').addEventListener('click', () => showLifehack(lhIndex - 1));
+  $('lh-close').addEventListener('click', closeLh);
+  $('lifehack-modal').addEventListener('click', e => { if (e.target.id === 'lifehack-modal') closeLh(); });
+  document.addEventListener('keydown', e => {
+    if ($('lifehack-modal').hidden) return;
+    if (e.key === 'Escape') closeLh();
+    else if (e.key === 'ArrowRight') showLifehack(lhIndex + 1);
+    else if (e.key === 'ArrowLeft') showLifehack(lhIndex - 1);
+  });
+  $('lh-code').addEventListener('click', () => {
+    const text = $('lh-code').textContent;
+    const ok = () => { $('lh-copy').textContent = 'Скопійовано ✓'; toast('Формулу скопійовано 📋', true); };
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents($('lh-code')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $('lh-copy').textContent = 'Виділила формулу — натисни Ctrl+C'; };
+    try { navigator.clipboard.writeText(text).then(ok, fallback); } catch (e) { fallback(); }
+  });
 
   // ── explosion extras: sound, cracks, damage report ──
   let actx = null;
